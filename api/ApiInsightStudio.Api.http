@@ -1,0 +1,6 @@
+@ApiInsightStudio.Api_HostAddress = http://localhost:5037
+
+GET {{ApiInsightStudio.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
