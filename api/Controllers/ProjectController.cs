@@ -280,9 +280,9 @@ public class ProjectController : ControllerBase
         {
             description = await _aiService.GenerateDescriptionAsync(endpoint.Method, endpoint.Path);
         }
-        catch (Exception ex) when (ex.Message.Contains("TooManyRequests") || ex.Message.Contains("429") || ex.Message.Contains("RESOURCE_EXHAUSTED"))
+        catch (HttpRequestException)
         {
-            return StatusCode(429, new { message = "Gemini API kotası doldu. Google Cloud Console'dan billing'i aktifleştirin veya birkaç dakika bekleyip tekrar deneyin." });
+            return StatusCode(503, new { message = "Yerel AI servisi (Ollama) çalışmıyor. Ollama'yı başlatıp 'qwen2.5:7b' modelinin yüklü olduğundan emin olun." });
         }
         catch (Exception ex)
         {
