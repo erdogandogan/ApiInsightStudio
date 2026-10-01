@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.DTOs;
+using ApiInsightStudio.Api.Extensions;
 using ApiInsightStudio.Api.Models;
 using ApiInsightStudio.Api.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -200,14 +201,17 @@ public class ProjectController : ControllerBase
     [HttpGet("{projectId}/dashboard")]
     public async Task<IActionResult> GetDashboard([FromRoute] int projectId)
     {
-        // Proje ve ilişkili verileri Eager Loading ile yükle
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized(new { message = "Geçerli bir kullanıcı bilgisi bulunamadı." });
+
+        // Proje ve ilişkili verileri Eager Loading ile yükle; yalnızca kullanıcının kendi projesi
         var project = await _context.Projects
             .AsNoTracking()
             .Include(p => p.Endpoints)
                 .ThenInclude(e => e.TestScenarios)
             .Include(p => p.AnalysisResults)
                 .ThenInclude(ar => ar.Warnings)
-            .FirstOrDefaultAsync(p => p.Id == projectId);
+            .FirstOrDefaultAsync(p => p.Id == projectId && p.UserId == userId);
 
         if (project == null)
         {
@@ -259,8 +263,14 @@ public class ProjectController : ControllerBase
     [HttpPost("{projectId}/endpoint/{endpointId}/generate-ai-description")]
     public async Task<IActionResult> GenerateAiDescription([FromRoute] int projectId, [FromRoute] int endpointId)
     {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized(new { message = "Geçerli bir kullanıcı bilgisi bulunamadı." });
+
+        // Endpoint, kullanıcının kendi projesine ait değilse "bulunamadı" döner (varlığı sızdırılmaz)
         var endpoint = await _context.Endpoints
-            .FirstOrDefaultAsync(e => e.Id == endpointId && e.ProjectId == projectId);
+            .FirstOrDefaultAsync(e => e.Id == endpointId
+                                      && e.ProjectId == projectId
+                                      && e.Project.UserId == userId);
 
         if (endpoint is null)
             return NotFound(new { message = "Endpoint bulunamadı." });
