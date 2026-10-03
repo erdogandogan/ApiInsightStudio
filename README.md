@@ -31,4 +31,14 @@ npm run dev                  # http://localhost:3000
 ```
 
 ### AI açıklaması (isteğe bağlı)
-"AI ile açıklama üret" özelliği yerel [Ollama](https://ollama.com) ister: `ollama pull qwen2.5:7b`. Ollama yoksa bu özellik hata verir, diğer her şey çalışır.
+"AI ile açıklama üret" özelliği, OpenAI uyumlu bir sohbet uç noktası (`/v1/chat/completions`) sunan yerel bir sağlayıcı ister. Varsayılan [Ollama](https://ollama.com)'dır: `ollama pull qwen2.5:7b`. AI servisi yoksa bu özellik hata verir, diğer her şey çalışır.
+
+Sağlayıcı ve model kod değişmeden, `api/appsettings.json` içindeki `Ai` bölümünden (veya `Ai__BaseUrl`, `Ai__Model` ortam değişkenlerinden) değiştirilir:
+
+| Sağlayıcı | `Ai:BaseUrl` |
+|---|---|
+| Ollama (varsayılan) | `http://localhost:11434` |
+| LM Studio | `http://localhost:1234` |
+| llama.cpp server | `http://localhost:8080` |
+
+`BaseUrl` "/v1" olmadan yazılır. Anahtar isteyen bir sağlayıcı için `Ai:ApiKey` yalnızca `dotnet user-secrets` ile verilir, dosyaya yazılmaz. Üretilen açıklama `Endpoint.AiSummary` alanına kaydedilir, kalite skorunu etkilemez.
