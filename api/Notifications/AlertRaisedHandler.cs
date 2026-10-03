@@ -35,6 +35,8 @@ public class AlertRaisedHandler : IEventHandler<AlertRaised>
         var channels = new List<string>();
         if (!string.IsNullOrWhiteSpace(settings.WebhookUrl))
             channels.Add(WebhookChannel.ChannelName);
+        if (settings.NotifyTelegram)
+            channels.Add(TelegramChannel.ChannelName);
 
         var payload = JsonSerializer.Serialize(@event);
         var now = _time.GetUtcNow().UtcDateTime;

@@ -14,6 +14,9 @@ public class AutomationSettingsDto
 
     public bool Enabled { get; set; } = true;
 
+    /// <summary>Uyarılar Telegram'a da gönderilsin mi? Yalnızca sunucuda Telegram yapılandırılmışsa açılabilir.</summary>
+    public bool NotifyTelegram { get; set; }
+
     /// <summary>Uyarıların imzalı POST ile gönderileceği https adresi. Boş/null ise webhook kapalıdır.</summary>
     [StringLength(2048)]
     public string? WebhookUrl { get; set; }
@@ -23,6 +26,9 @@ public class AutomationSettingsResponseDto : AutomationSettingsDto
 {
     /// <summary>Webhook için bir imza sırrı üretilmiş mi? (Sırrın kendisi bir daha okunamaz.)</summary>
     public bool WebhookSecretConfigured { get; set; }
+
+    /// <summary>Sunucuda Telegram (bot token ve sohbet kimliği) yapılandırılmış mı?</summary>
+    public bool TelegramAvailable { get; set; }
 
     /// <summary>Yalnızca sır az önce üretildiyse dolu gelir ve bir daha gösterilmez. Alıcı tarafta imzayı doğrulamak için saklayın.</summary>
     public string? NewWebhookSecret { get; set; }
