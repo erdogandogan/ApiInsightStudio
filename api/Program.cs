@@ -71,6 +71,7 @@ if (builder.Configuration.GetValue(
 
 builder.Services.AddScoped<AnalysisService>();
 builder.Services.AddScoped<TestGenerationService>();
+builder.Services.Configure<AiOptions>(builder.Configuration.GetSection(AiOptions.SectionName));
 builder.Services.AddHttpClient<AiService>(client =>
 {
     client.Timeout = TimeSpan.FromMinutes(5);
