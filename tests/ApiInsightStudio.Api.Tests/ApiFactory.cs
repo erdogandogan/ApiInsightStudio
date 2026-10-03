@@ -106,7 +106,10 @@ public class ApiFactory : WebApplicationFactory<Program>
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             _owner.OllamaCalls++;
-            var json = System.Text.Json.JsonSerializer.Serialize(new { response = OllamaReplyText });
+            var json = System.Text.Json.JsonSerializer.Serialize(new
+            {
+                choices = new[] { new { message = new { role = "assistant", content = OllamaReplyText } } }
+            });
             return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
             {
                 Content = new StringContent(json)

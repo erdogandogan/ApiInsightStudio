@@ -281,9 +281,15 @@ public class ProjectController : ControllerBase
         {
             description = await _aiService.GenerateDescriptionAsync(endpoint.Method, endpoint.Path);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException ex) when (ex.StatusCode is null)
         {
-            return StatusCode(503, new { message = "Yerel AI servisi (Ollama) çalışmıyor. Ollama'yı başlatıp 'qwen2.5:7b' modelinin yüklü olduğundan emin olun." });
+            // Bağlantı kurulamadı: servis kapalı veya adres yanlış
+            return StatusCode(503, new { message = $"AI servisine ulaşılamadı ({_aiService.BaseUrl}). Servisin (örn. Ollama) çalıştığından ve '{_aiService.Model}' modelinin yüklü olduğundan emin olun." });
+        }
+        catch (HttpRequestException ex)
+        {
+            // Servis cevap verdi ama hata döndü (çoğunlukla model adı yanlış veya model yüklü değil)
+            return StatusCode(502, new { message = $"AI servisi hata döndürdü ({(int)ex.StatusCode!.Value}). Model adının ('{_aiService.Model}') doğru ve sağlayıcıda yüklü olduğunu kontrol edin." });
         }
         catch (Exception ex)
         {
