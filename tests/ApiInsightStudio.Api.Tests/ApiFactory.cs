@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Cryptography;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
@@ -35,9 +36,14 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Key", Convert.ToBase64String(RandomNumberGenerator.GetBytes(48)));
         builder.UseSetting("Jwt:Issuer", "test-issuer");
         builder.UseSetting("Jwt:Audience", "test-audience");
+        // Arka plan işçisi testlerde kapalı: işleme, testlerin kontrolünde (doğrudan çağrılarak) yapılır.
+        builder.UseSetting("Notifications:WorkerEnabled", "false");
 
         builder.ConfigureServices(services =>
         {
+            // Webhook sırları test sırasında geçici anahtarla şifrelenir; kullanıcı profiline anahtar yazılmaz.
+            services.AddDataProtection().UseEphemeralDataProtectionProvider();
+
             services.RemoveAll<DbContextOptions<AppDbContext>>();
             services.RemoveAll<AppDbContext>();
             services.AddDbContext<AppDbContext>(options => options.UseSqlite(_connection));

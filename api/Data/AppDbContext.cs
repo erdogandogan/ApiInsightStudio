@@ -31,6 +31,8 @@ public class AppDbContext : DbContext
 
     public DbSet<Alert> Alerts { get; set; } = null!;
 
+    public DbSet<NotificationDelivery> NotificationDeliveries { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Proje başına en fazla bir ayar satırı
@@ -45,5 +47,14 @@ public class AppDbContext : DbContext
         // Bekleyen mesajları hızlı bulmak için
         modelBuilder.Entity<OutboxMessage>()
             .HasIndex(message => new { message.ProcessedAt, message.Id });
+
+        // Aynı olay ve kanal için en fazla bir teslimat satırı (idempotency)
+        modelBuilder.Entity<NotificationDelivery>()
+            .HasIndex(delivery => new { delivery.EventId, delivery.Channel })
+            .IsUnique();
+
+        // Zamanı gelmiş teslimatları hızlı bulmak için
+        modelBuilder.Entity<NotificationDelivery>()
+            .HasIndex(delivery => new { delivery.Status, delivery.NextAttemptAt });
     }
 }

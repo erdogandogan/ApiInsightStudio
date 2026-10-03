@@ -2,6 +2,7 @@ using ApiInsightStudio.Api.Automation;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Models;
+using ApiInsightStudio.Api.Notifications;
 using ApiInsightStudio.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -295,22 +296,72 @@ public class AutomationEventFlowTests
     }
 
     [Fact]
-    public async Task Mesaj_en_fazla_MaxAttempts_kez_denenir()
+    public async Task Basarisiz_mesaj_ilk_hatada_10_sn_sonraya_ertelenir()
     {
         using var db = new TestDb();
         var projectId = db.SeedProject(db.SeedUser(), new EndpointSpec());
+        var clock = new TestClock();
 
         await using var context = db.CreateContext();
         using var provider = TestServices.BuildProvider(context, services =>
-            services.AddSingleton<IEventHandler<AnalysisCompleted>>(sp => new ThrowingHandler(context)));
+            services.AddSingleton<IEventHandler<AnalysisCompleted>>(sp => new ThrowingHandler(context)), clock);
+        await TestServices.CreateAnalysisService(provider).AnalyzeProjectAsync(projectId);
+
+        var message = Assert.Single(Outbox(db, nameof(AnalysisCompleted)));
+        Assert.Equal(1, message.Attempts);
+        Assert.Equal(clock.GetUtcNow().UtcDateTime.AddSeconds(10), message.NextAttemptAt);
+        Assert.Null(message.DeadAt);
+    }
+
+    [Fact]
+    public async Task Vakti_gelmeyen_basarisiz_mesaj_tekrar_denenmez_gelince_denenir_ve_bekleme_ikiye_katlanir()
+    {
+        using var db = new TestDb();
+        var projectId = db.SeedProject(db.SeedUser(), new EndpointSpec());
+        var clock = new TestClock();
+
+        await using var context = db.CreateContext();
+        using var provider = TestServices.BuildProvider(context, services =>
+            services.AddSingleton<IEventHandler<AnalysisCompleted>>(sp => new ThrowingHandler(context)), clock);
+        await TestServices.CreateAnalysisService(provider).AnalyzeProjectAsync(projectId);
+        var dispatcher = provider.GetRequiredService<OutboxDispatcher>();
+
+        // Vakit gelmeden: yeniden denenmez
+        clock.Advance(TimeSpan.FromSeconds(9));
+        await dispatcher.DispatchPendingAsync();
+        Assert.Equal(1, Assert.Single(Outbox(db, nameof(AnalysisCompleted))).Attempts);
+
+        // Vakit gelince: denenir, bir sonraki bekleme 20 sn
+        clock.Advance(TimeSpan.FromSeconds(1));
+        await dispatcher.DispatchPendingAsync();
+        var message = Assert.Single(Outbox(db, nameof(AnalysisCompleted)));
+        Assert.Equal(2, message.Attempts);
+        Assert.Equal(clock.GetUtcNow().UtcDateTime.AddSeconds(20), message.NextAttemptAt);
+    }
+
+    [Fact]
+    public async Task Mesaj_RetryPolicy_MaxAttempts_denemeden_sonra_olu_olur_ve_bir_daha_denenmez()
+    {
+        using var db = new TestDb();
+        var projectId = db.SeedProject(db.SeedUser(), new EndpointSpec());
+        var clock = new TestClock();
+
+        await using var context = db.CreateContext();
+        using var provider = TestServices.BuildProvider(context, services =>
+            services.AddSingleton<IEventHandler<AnalysisCompleted>>(sp => new ThrowingHandler(context)), clock);
         await TestServices.CreateAnalysisService(provider).AnalyzeProjectAsync(projectId);
 
         var dispatcher = provider.GetRequiredService<OutboxDispatcher>();
-        for (var i = 0; i < OutboxDispatcher.MaxAttempts + 3; i++)
+        for (var i = 0; i < RetryPolicy.MaxAttempts + 3; i++)
+        {
+            clock.Advance(TimeSpan.FromDays(1));
             await dispatcher.DispatchPendingAsync();
+        }
 
         var message = Assert.Single(Outbox(db, nameof(AnalysisCompleted)));
-        Assert.Equal(OutboxDispatcher.MaxAttempts, message.Attempts);
+        Assert.Equal(RetryPolicy.MaxAttempts, message.Attempts);
+        Assert.NotNull(message.DeadAt);
+        Assert.Null(message.NextAttemptAt);
         Assert.Null(message.ProcessedAt);
     }
 

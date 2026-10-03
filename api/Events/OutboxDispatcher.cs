@@ -2,30 +2,39 @@ using System.Reflection;
 using System.Runtime.ExceptionServices;
 using System.Text.Json;
 using ApiInsightStudio.Api.Data;
+using ApiInsightStudio.Api.Notifications;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiInsightStudio.Api.Events;
 
 /// <summary>
-/// Outbox'taki bekleyen olayları, kayıtlı işleyicilere verir. Şimdilik analiz biter bitmez çağrılır;
-/// Aşama 2'de aynı metodu bir arka plan servisi çağıracak.
+/// Outbox'taki bekleyen olayları, kayıtlı işleyicilere verir. Analiz biter bitmez (hemen) ve arka plan
+/// işçisi tarafından (<see cref="AutomationWorker"/>) çağrılır. Başarısız mesajlar üssel geri çekilmeyle
+/// yeniden denenir (<see cref="RetryPolicy"/>), hak bitince "ölü" olur.
 /// </summary>
 public class OutboxDispatcher
 {
-    /// <summary>Bu kadar başarısız denemeden sonra mesaj bir daha denenmez.</summary>
-    public const int MaxAttempts = 5;
+    /// <summary>Bir çağrıda, bir olayın tetiklediği zincir (örn. AnalysisCompleted → AlertRaised) için en fazla tur sayısı.</summary>
+    private const int MaxRounds = 5;
 
     private const int BatchSize = 50;
     private const int MaxErrorLength = 500;
 
+    // Tek sunucu varsayımı: aynı mesajın iki kez işlenmemesi için süreç genelinde tek dispatcher çalışır.
+    // Birden fazla sunucuya ölçeklenirse bunun yerine veritabanı düzeyinde bir kilit (kiralama) gerekir.
+    private static readonly SemaphoreSlim Gate = new(1, 1);
+
     private readonly AppDbContext _dbContext;
     private readonly IServiceProvider _services;
+    private readonly TimeProvider _time;
     private readonly ILogger<OutboxDispatcher> _logger;
 
-    public OutboxDispatcher(AppDbContext dbContext, IServiceProvider services, ILogger<OutboxDispatcher> logger)
+    public OutboxDispatcher(
+        AppDbContext dbContext, IServiceProvider services, TimeProvider time, ILogger<OutboxDispatcher> logger)
     {
         _dbContext = dbContext;
         _services = services;
+        _time = time;
         _logger = logger;
     }
 
@@ -34,18 +43,44 @@ public class OutboxDispatcher
     {
         try
         {
-            return await DispatchCoreAsync(cancellationToken);
+            await Gate.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            return 0;
+        }
+
+        try
+        {
+            var total = 0;
+            for (var round = 0; round < MaxRounds; round++)
+            {
+                var processed = await DispatchCoreAsync(cancellationToken);
+                total += processed;
+                if (processed == 0)
+                    break;
+            }
+
+            return total;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return 0;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Outbox işlenirken beklenmeyen hata oluştu.");
             return 0;
         }
+        finally
+        {
+            Gate.Release();
+        }
     }
 
     private async Task<int> DispatchCoreAsync(CancellationToken cancellationToken)
     {
-        // İşleyicisi olmayan türler (şimdilik AlertRaised) beklemede kalır; Aşama 2'de işleyicisi gelince işlenir.
+        // İşleyicisi olmayan türler beklemede kalır; işleyicisi gelince işlenir.
         var handledTypeNames = EventTypes.All
             .Where(pair => GetHandlers(pair.Value).Count > 0)
             .Select(pair => pair.Key)
@@ -54,12 +89,17 @@ public class OutboxDispatcher
         if (handledTypeNames.Count == 0)
             return 0;
 
+        var now = _time.GetUtcNow().UtcDateTime;
+
         var pending = await _dbContext.OutboxMessages
             .AsNoTracking()
-            .Where(m => m.ProcessedAt == null && m.Attempts < MaxAttempts && handledTypeNames.Contains(m.Type))
+            .Where(m => m.ProcessedAt == null
+                        && m.DeadAt == null
+                        && (m.NextAttemptAt == null || m.NextAttemptAt <= now)
+                        && handledTypeNames.Contains(m.Type))
             .OrderBy(m => m.Id)
             .Take(BatchSize)
-            .Select(m => new { m.Id, m.Type, m.PayloadJson })
+            .Select(m => new { m.Id, m.Type, m.PayloadJson, m.Attempts })
             .ToListAsync(cancellationToken);
 
         var processed = 0;
@@ -79,7 +119,7 @@ public class OutboxDispatcher
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
 
-                var processedAt = DateTime.UtcNow;
+                var processedAt = _time.GetUtcNow().UtcDateTime;
                 await _dbContext.OutboxMessages
                     .Where(m => m.Id == message.Id)
                     .ExecuteUpdateAsync(s => s.SetProperty(m => m.ProcessedAt, processedAt), cancellationToken);
@@ -87,22 +127,36 @@ public class OutboxDispatcher
                 await transaction.CommitAsync(cancellationToken);
                 processed++;
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException || !cancellationToken.IsCancellationRequested)
             {
                 _logger.LogWarning(ex, "Outbox mesajı {MessageId} ({Type}) işlenemedi.", message.Id, message.Type);
 
-                // Başarısız işleyicinin yarım kalan değişiklikleri atılır; yalnızca deneme sayısı ve hata kaydedilir.
+                // Başarısız işleyicinin yarım kalan değişiklikleri atılır; yalnızca deneme sayısı, hata ve
+                // bir sonraki deneme zamanı (veya ölü işareti) kaydedilir.
                 _dbContext.ChangeTracker.Clear();
-                var error = Truncate(ex.Message);
-                await _dbContext.OutboxMessages
-                    .Where(m => m.Id == message.Id)
-                    .ExecuteUpdateAsync(s => s
-                        .SetProperty(m => m.Attempts, m => m.Attempts + 1)
-                        .SetProperty(m => m.LastError, error), cancellationToken);
+                await RecordFailureAsync(message.Id, message.Attempts + 1, ex, cancellationToken);
             }
         }
 
         return processed;
+    }
+
+    private async Task RecordFailureAsync(int messageId, int attempts, Exception ex, CancellationToken cancellationToken)
+    {
+        var failedAt = _time.GetUtcNow().UtcDateTime;
+        var error = Truncate(ex.Message);
+        var delay = RetryPolicy.NextDelay(attempts);
+
+        DateTime? nextAttemptAt = delay is null ? null : failedAt + delay.Value;
+        DateTime? deadAt = delay is null ? failedAt : null;
+
+        await _dbContext.OutboxMessages
+            .Where(m => m.Id == messageId)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(m => m.Attempts, attempts)
+                .SetProperty(m => m.LastError, error)
+                .SetProperty(m => m.NextAttemptAt, nextAttemptAt)
+                .SetProperty(m => m.DeadAt, deadAt), cancellationToken);
     }
 
     private List<object> GetHandlers(Type eventType)

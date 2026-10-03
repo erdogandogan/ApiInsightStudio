@@ -25,6 +25,12 @@ public class OutboxMessage
     /// <summary>Başarısız işleme denemesi sayısı.</summary>
     public int Attempts { get; set; }
 
+    /// <summary>Başarısız mesaj bu zamandan önce yeniden denenmez (üssel geri çekilme); null ise hemen denenebilir.</summary>
+    public DateTime? NextAttemptAt { get; set; }
+
+    /// <summary>Deneme hakkı bitti ve mesaj bir daha denenmeyecek ("ölü mesaj"); null ise canlı.</summary>
+    public DateTime? DeadAt { get; set; }
+
     /// <summary>Son hatanın kısa metni (hassas veri içermez).</summary>
     public string? LastError { get; set; }
 }
