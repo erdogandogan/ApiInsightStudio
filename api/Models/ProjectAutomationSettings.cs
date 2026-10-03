@@ -23,5 +23,11 @@ public class ProjectAutomationSettings
     /// <summary>Kapalıysa bu proje için hiçbir uyarı kuralı çalışmaz.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>Uyarıların imzalı POST ile gönderileceği adres. Boşsa webhook kanalı kapalıdır.</summary>
+    public string? WebhookUrl { get; set; }
+
+    /// <summary>Webhook imza sırrı, Data Protection ile şifreli. Düz hali veritabanında tutulmaz ve API'den okunamaz.</summary>
+    public string? WebhookSecretProtected { get; set; }
+
     public Project Project { get; set; } = null!;
 }

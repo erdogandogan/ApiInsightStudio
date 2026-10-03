@@ -2,9 +2,12 @@ using System.Text;
 using ApiInsightStudio.Api.Automation;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Events;
+using ApiInsightStudio.Api.Notifications;
 using ApiInsightStudio.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
@@ -48,6 +51,24 @@ builder.Services.AddScoped<AlertRuleEvaluator>();
 builder.Services.AddScoped<IEventPublisher, OutboxEventPublisher>();
 builder.Services.AddScoped<IEventHandler<AnalysisCompleted>, AnalysisCompletedHandler>();
 builder.Services.AddScoped<OutboxDispatcher>();
+
+// Bildirimler: olay işleyici (teslimat satırı açar), kanallar, teslimat işleyici ve arka plan işçisi
+builder.Services.Configure<NotificationOptions>(builder.Configuration.GetSection(NotificationOptions.SectionName));
+builder.Services.AddDataProtection().SetApplicationName("ApiInsightStudio");
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton<WebhookSecretProtector>();
+builder.Services.AddHttpClient(WebhookChannel.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(5))
+    .ConfigurePrimaryHttpMessageHandler(sp =>
+        SafeHttp.CreateHandler(sp.GetRequiredService<IOptions<NotificationOptions>>().Value.AllowedPrivateHosts));
+builder.Services.AddScoped<INotificationChannel, WebhookChannel>();
+builder.Services.AddScoped<IEventHandler<AlertRaised>, AlertRaisedHandler>();
+builder.Services.AddScoped<DeliveryProcessor>();
+if (builder.Configuration.GetValue(
+        $"{NotificationOptions.SectionName}:{nameof(NotificationOptions.WorkerEnabled)}", true))
+{
+    builder.Services.AddHostedService<AutomationWorker>();
+}
+
 builder.Services.AddScoped<AnalysisService>();
 builder.Services.AddScoped<TestGenerationService>();
 builder.Services.AddHttpClient<AiService>(client =>

@@ -4,7 +4,8 @@ namespace ApiInsightStudio.Api.Events;
 public sealed record AnalysisCompleted(int ProjectId, DateTime OccurredAt);
 
 /// <summary>Bir uyarı kuralı tuttu ve yeni bir uyarı açıldı (Aşama 2'de dışarı bildirilecek).</summary>
-public sealed record AlertRaised(int ProjectId, string RuleCode, string Message, string Severity, DateTime RaisedAt);
+public sealed record AlertRaised(
+    int ProjectId, string RuleCode, string Message, string Severity, DateTime RaisedAt, Guid EventId);
 
 /// <summary>Outbox'taki tür adını CLR olay türüne eşleyen kayıt.</summary>
 public static class EventTypes

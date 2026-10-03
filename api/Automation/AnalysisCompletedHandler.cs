@@ -75,7 +75,7 @@ public class AnalysisCompletedHandler : IEventHandler<AnalysisCompleted>
                 });
 
                 _events.Publish(new AlertRaised(
-                    @event.ProjectId, candidate.RuleCode, candidate.Message, candidate.Severity, now));
+                    @event.ProjectId, candidate.RuleCode, candidate.Message, candidate.Severity, now, Guid.NewGuid()));
             }
             else
             {

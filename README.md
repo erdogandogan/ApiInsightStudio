@@ -32,3 +32,27 @@ npm run dev                  # http://localhost:3000
 
 ### AI açıklaması (isteğe bağlı)
 "AI ile açıklama üret" özelliği yerel [Ollama](https://ollama.com) ister: `ollama pull qwen2.5:7b`. Ollama yoksa bu özellik hata verir, diğer her şey çalışır.
+
+### Uyarılar ve bildirimler (webhook)
+Bir analiz bitince kurallar çalışır ve yeni bir uyarı açılırsa (skor eşiğin altında, kritik uç noktada kimlik doğrulama eksik) projeye tanımlı kanallara bildirim gider. Uyarılar kenar tetiklemelidir: aynı kural için Açık uyarı varken yenisi açılmaz, kural düzelince uyarı kendiliğinden Çözüldü olur.
+
+| Uç nokta | Ne yapar |
+|---|---|
+| `GET/PUT /api/automation/{projectId}/settings` | Eşik, kural ve webhook adresi ayarları. PUT tam değiştirmedir (boş `webhookUrl` webhook'u kapatır) |
+| `POST /api/automation/{projectId}/webhook/secret` | İmza sırrını yeniler |
+| `GET /api/automation/{projectId}/alerts` | Uyarılar (`?status=Open\|Resolved`) |
+| `GET /api/automation/{projectId}/deliveries` | Bildirim teslimatları (`?status=Pending\|Succeeded\|Dead`) |
+
+**Webhook:** Adres ilk kez verildiğinde sunucu bir imza sırrı (`whsec_...`) üretir ve **yalnızca o cevapta bir kez** gösterir; veritabanında şifreli (Data Protection) saklanır, bir daha okunamaz. İstek, `POST` ile JSON gövde taşır ve şu başlıkları içerir:
+
+- `X-Event-Id`: olayın benzersiz kimliği (alıcı tekrarı ayıklayabilir)
+- `X-Timestamp`: Unix saniyesi
+- `X-Signature`: `sha256=` + `HMAC-SHA256(sır, "{X-Timestamp}.{ham gövde}")` (küçük harfli onaltılık)
+
+Alıcı, kendi sırrıyla aynı imzayı hesaplayıp karşılaştırmalı ve `X-Timestamp` çok eskiyse isteği reddetmelidir (tekrar saldırısı). 2xx dışındaki cevaplar, yönlendirmeler ve 5 saniyeyi aşan cevaplar başarısızdır.
+
+**Yeniden deneme:** Başarısız teslimat 10, 20, 40, 80 saniye arayla yeniden denenir; 5. başarısızlıkta `Dead` olur. Deneme bilgisi veritabanında tutulur, uygulama yeniden başlasa da kaybolmaz. Arka plan işçisi (`Notifications:WorkerEnabled`, `Notifications:PollSeconds`) bunları işler.
+
+**Güvenlik (SSRF):** Webhook adresi yalnızca `https` olabilir; kullanıcı adı/parola içeremez. Loopback, özel ağ (10/8, 172.16/12, 192.168/16), link-local (bulut metadata `169.254.169.254` dahil), CGNAT ve ayrılmış adreslere (IPv6 ve IPv4-gömülü biçimler dahil) bildirim gönderilmez. Kontrol hem kayıt anında hem de bağlantının kurulduğu anda, bağlanılacak IP üzerinde yapılır (DNS rebinding'e karşı); yönlendirmeler izlenmez, proxy kullanılmaz. Yalnızca geliştirme için, `Notifications:AllowedPrivateHosts` listesine yazılan adlar bu kuraldan muaf tutulur (bu adlar için düz `http` de kabul edilir); üretimde boş bırakın.
+
+**Tek sunucu varsayımı:** Çakışmayı önlemek için olay ve teslimat işleme süreç içi kilitle serileştirilir. Birden fazla sunucuya ölçeklenirse veritabanı düzeyinde bir kilit gerekir.
