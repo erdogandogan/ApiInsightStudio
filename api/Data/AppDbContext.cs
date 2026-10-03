@@ -24,4 +24,26 @@ public class AppDbContext : DbContext
     public DbSet<Warning> Warnings { get; set; } = null!;
 
     public DbSet<TestScenario> TestScenarios { get; set; } = null!;
+
+    public DbSet<OutboxMessage> OutboxMessages { get; set; } = null!;
+
+    public DbSet<ProjectAutomationSettings> ProjectAutomationSettings { get; set; } = null!;
+
+    public DbSet<Alert> Alerts { get; set; } = null!;
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Proje başına en fazla bir ayar satırı
+        modelBuilder.Entity<ProjectAutomationSettings>()
+            .HasIndex(settings => settings.ProjectId)
+            .IsUnique();
+
+        // "Bu proje ve kural için Açık uyarı var mı?" sorgusu için
+        modelBuilder.Entity<Alert>()
+            .HasIndex(alert => new { alert.ProjectId, alert.RuleCode, alert.Status });
+
+        // Bekleyen mesajları hızlı bulmak için
+        modelBuilder.Entity<OutboxMessage>()
+            .HasIndex(message => new { message.ProcessedAt, message.Id });
+    }
 }

@@ -34,7 +34,7 @@ public class AiDescriptionTests
         var controller = new ProjectController(
             context,
             new ConfigurationBuilder().Build(),
-            new AnalysisService(context),
+            TestServices.CreateAnalysisService(context),
             new TestGenerationService(context),
             aiService);
 
@@ -53,7 +53,7 @@ public class AiDescriptionTests
         var projectId = db.SeedProject(userId, new EndpointSpec(Summary: ""));
 
         using var context = db.CreateContext();
-        new AnalysisService(context).AnalyzeProjectAsync(projectId).GetAwaiter().GetResult();
+        TestServices.CreateAnalysisService(context).AnalyzeProjectAsync(projectId).GetAwaiter().GetResult();
         var endpointId = context.Endpoints.Single(e => e.ProjectId == projectId).Id;
         return (userId, projectId, endpointId);
     }
@@ -131,7 +131,7 @@ public class AiDescriptionTests
         }
 
         await using (var context = db.CreateContext())
-            await new AnalysisService(context).AnalyzeProjectAsync(projectId);
+            await TestServices.CreateAnalysisService(context).AnalyzeProjectAsync(projectId);
 
         await using var check = db.CreateContext();
         Assert.Equal("Ürünleri listeler.", check.Endpoints.Single(e => e.Id == endpointId).AiSummary);

@@ -1,5 +1,7 @@
 using System.Text;
+using ApiInsightStudio.Api.Automation;
 using ApiInsightStudio.Api.Data;
+using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -42,6 +44,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 builder.Services.AddControllers();
+builder.Services.AddScoped<AlertRuleEvaluator>();
+builder.Services.AddScoped<IEventPublisher, OutboxEventPublisher>();
+builder.Services.AddScoped<IEventHandler<AnalysisCompleted>, AnalysisCompletedHandler>();
+builder.Services.AddScoped<OutboxDispatcher>();
 builder.Services.AddScoped<AnalysisService>();
 builder.Services.AddScoped<TestGenerationService>();
 builder.Services.AddHttpClient<AiService>(client =>
