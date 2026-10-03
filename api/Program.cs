@@ -4,6 +4,7 @@ using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Notifications;
 using ApiInsightStudio.Api.Services;
+using ApiInsightStudio.Api.TestRunner;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -65,10 +66,20 @@ builder.Services.Configure<TelegramOptions>(builder.Configuration.GetSection(Tel
 builder.Services.AddTelegramChannel();
 builder.Services.AddScoped<IEventHandler<AlertRaised>, AlertRaisedHandler>();
 builder.Services.AddScoped<DeliveryProcessor>();
+
+// Otomatik test koşusu: hedef API'ye güvenli (SSRF korumalı, yönlendirmesiz) istemciyle istek atar
+builder.Services.AddHttpClient(TestRunExecutor.HttpClientName, client => client.Timeout = TimeSpan.FromSeconds(10))
+    .ConfigurePrimaryHttpMessageHandler(sp =>
+        SafeHttp.CreateHandler(sp.GetRequiredService<IOptions<NotificationOptions>>().Value.AllowedPrivateHosts));
+builder.Services.AddScoped<TestRunExecutor>();
+builder.Services.AddScoped<TestRunProcessor>();
+builder.Services.AddScoped<IEventHandler<TestRunCompleted>, TestRunCompletedHandler>();
+
 if (builder.Configuration.GetValue(
         $"{NotificationOptions.SectionName}:{nameof(NotificationOptions.WorkerEnabled)}", true))
 {
     builder.Services.AddHostedService<AutomationWorker>();
+    builder.Services.AddHostedService<TestRunWorker>();
 }
 
 builder.Services.AddScoped<AnalysisService>();

@@ -7,6 +7,7 @@ namespace ApiInsightStudio.Api.Models;
 public class ProjectAutomationSettings
 {
     public const int DefaultScoreThreshold = 60;
+    public const int DefaultTestFailureThresholdPercent = 20;
 
     [Key]
     public int Id { get; set; }
@@ -22,6 +23,23 @@ public class ProjectAutomationSettings
 
     /// <summary>Kapalıysa bu proje için hiçbir uyarı kuralı çalışmaz.</summary>
     public bool Enabled { get; set; } = true;
+
+    /// <summary>
+    /// Otomatik test koşusunun istek atacağı hedef API'nin kök adresi (sorgu/parça içermez). Boşsa test koşusu başlatılamaz.
+    /// </summary>
+    public string? TargetBaseUrl { get; set; }
+
+    /// <summary>Hedef API için isteğe bağlı Bearer token, Data Protection ile şifreli. API'den okunamaz.</summary>
+    public string? TargetBearerTokenProtected { get; set; }
+
+    /// <summary>
+    /// Kapalıyken (varsayılan) yalnızca GET çalışır. Açılırsa mutating metotlarda (POST/PUT/PATCH/DELETE)
+    /// yalnızca olumsuz senaryolar (401/400/404) çalışır; başarılı senaryolar hiçbir zaman çalıştırılmaz.
+    /// </summary>
+    public bool AllowMutatingTests { get; set; }
+
+    /// <summary>Çalıştırılan testlerde başarısızlık yüzdesi bunu aşarsa TEST_FAILURES uyarısı açılır (0-100).</summary>
+    public int TestFailureThresholdPercent { get; set; } = DefaultTestFailureThresholdPercent;
 
     /// <summary>Uyarılar sunucuda yapılandırılmış Telegram sohbetine de gönderilsin mi?</summary>
     public bool NotifyTelegram { get; set; }

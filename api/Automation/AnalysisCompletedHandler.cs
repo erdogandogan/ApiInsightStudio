@@ -7,20 +7,21 @@ using Microsoft.EntityFrameworkCore;
 namespace ApiInsightStudio.Api.Automation;
 
 /// <summary>
-/// Analiz bitince kuralları değerlendirir. Uyarılar "kenar tetiklemeli" çalışır: bir kural için zaten
-/// Açık bir uyarı varsa yenisi açılmaz (bildirim tekrarını önler); kural artık tutmuyorsa Açık uyarı
-/// Çözüldü yapılır; sonra tekrar bozulursa yeni uyarı açılır.
+/// Analiz bitince kuralları değerlendirir. Uyarılar "kenar tetiklemeli" çalışır (bkz. <see cref="AlertReconciler"/>):
+/// bir kural için zaten Açık bir uyarı varsa yenisi açılmaz (bildirim tekrarını önler); kural artık tutmuyorsa
+/// Açık uyarı Çözüldü yapılır; sonra tekrar bozulursa yeni uyarı açılır. Yalnızca analiz kurallarını
+/// (<see cref="AlertRuleCodes.AnalysisRules"/>) yönetir.
 /// </summary>
 public class AnalysisCompletedHandler : IEventHandler<AnalysisCompleted>
 {
     private readonly AppDbContext _dbContext;
-    private readonly IEventPublisher _events;
+    private readonly AlertReconciler _reconciler;
     private readonly AlertRuleEvaluator _evaluator;
 
     public AnalysisCompletedHandler(AppDbContext dbContext, IEventPublisher events, AlertRuleEvaluator evaluator)
     {
         _dbContext = dbContext;
-        _events = events;
+        _reconciler = new AlertReconciler(dbContext, events);
         _evaluator = evaluator;
     }
 
@@ -53,43 +54,6 @@ public class AnalysisCompletedHandler : IEventHandler<AnalysisCompleted>
 
         var candidates = _evaluator.Evaluate(snapshot, settings);
 
-        var openAlerts = await _dbContext.Alerts
-            .Where(a => a.ProjectId == @event.ProjectId && a.Status == Alert.StatusOpen)
-            .ToListAsync(cancellationToken);
-
-        var now = DateTime.UtcNow;
-
-        foreach (var candidate in candidates)
-        {
-            var existing = openAlerts.FirstOrDefault(a => a.RuleCode == candidate.RuleCode);
-            if (existing is null)
-            {
-                _dbContext.Alerts.Add(new Alert
-                {
-                    ProjectId = @event.ProjectId,
-                    RuleCode = candidate.RuleCode,
-                    Message = candidate.Message,
-                    Severity = candidate.Severity,
-                    Status = Alert.StatusOpen,
-                    CreatedAt = now
-                });
-
-                _events.Publish(new AlertRaised(
-                    @event.ProjectId, candidate.RuleCode, candidate.Message, candidate.Severity, now, Guid.NewGuid()));
-            }
-            else
-            {
-                // Açık uyarı sürüyor: yeni bildirim yok, yalnızca güncel sayı/metin yansıtılır.
-                existing.Message = candidate.Message;
-                existing.Severity = candidate.Severity;
-            }
-        }
-
-        var stillTriggered = candidates.Select(c => c.RuleCode).ToHashSet();
-        foreach (var alert in openAlerts.Where(a => !stillTriggered.Contains(a.RuleCode)))
-        {
-            alert.Status = Alert.StatusResolved;
-            alert.ResolvedAt = now;
-        }
+        await _reconciler.ReconcileAsync(@event.ProjectId, candidates, AlertRuleCodes.AnalysisRules, cancellationToken);
     }
 }

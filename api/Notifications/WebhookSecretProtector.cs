@@ -10,14 +10,23 @@ namespace ApiInsightStudio.Api.Notifications;
 public class WebhookSecretProtector
 {
     private const string Purpose = "ApiInsightStudio.WebhookSecret.v1";
+    private const string TokenPurpose = "ApiInsightStudio.TargetToken.v1";
     private const string Prefix = "whsec_";
 
     private readonly IDataProtector _protector;
+    private readonly IDataProtector _tokenProtector;
 
     public WebhookSecretProtector(IDataProtectionProvider provider)
     {
         _protector = provider.CreateProtector(Purpose);
+        // Hedef API token'ı farklı bir amaçla şifrelenir: biri diğerinin yerine çözülemez.
+        _tokenProtector = provider.CreateProtector(TokenPurpose);
     }
+
+    /// <summary>Hedef API için kullanıcının verdiği Bearer token'ını şifreler.</summary>
+    public string ProtectToken(string token) => _tokenProtector.Protect(token);
+
+    public string UnprotectToken(string protectedToken) => _tokenProtector.Unprotect(protectedToken);
 
     /// <summary>Yeni bir rastgele sır üretir (256 bit).</summary>
     public string Generate() => Prefix + Convert.ToHexString(RandomNumberGenerator.GetBytes(32)).ToLowerInvariant();
