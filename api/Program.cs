@@ -103,3 +103,6 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+// WebApplicationFactory<Program> ile entegrasyon testleri için gerekli.
+public partial class Program { }
