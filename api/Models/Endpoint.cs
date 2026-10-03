@@ -23,6 +23,9 @@ public class Endpoint
     /// <summary>Endpoint için kısa açıklama/özet bilgisidir.</summary>
     public string Summary { get; set; } = string.Empty;
 
+    /// <summary>Yerel AI modelinin ürettiği açıklama. Summary'den ayrı tutulur; skoru ve uyarıları etkilemez.</summary>
+    public string? AiSummary { get; set; }
+
     /// <summary>Endpoint'in gerektirdiği kimlik doğrulama türü (örn: Bearer, ApiKey). Eğer null ise herkese açıktır.</summary>
     public string? AuthType { get; set; }
 

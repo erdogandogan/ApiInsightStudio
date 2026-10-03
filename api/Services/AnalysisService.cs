@@ -106,15 +106,36 @@ public class AnalysisService
             }
         }
 
-        var analysisResult = new AnalysisResult
-        {
-            ProjectId = projectId,
-            Score = Math.Max(0, score),
-            CreatedAt = DateTime.UtcNow,
-            Warnings = warnings
-        };
+        // Proje başına tek analiz sonucu tutulur: varsa en yenisi yerinde güncellenir (upsert),
+        // eski kopyalar silinir. Geçmişi okuyan bir yer yok; dashboard yalnızca en yenisini kullanır.
+        var existing = await _dbContext.AnalysisResults
+            .Include(analysis => analysis.Warnings)
+            .Where(analysis => analysis.ProjectId == projectId)
+            .OrderByDescending(analysis => analysis.CreatedAt)
+            .ThenByDescending(analysis => analysis.Id)
+            .ToListAsync();
 
-        _dbContext.AnalysisResults.Add(analysisResult);
+        var analysisResult = existing.FirstOrDefault();
+        if (analysisResult is null)
+        {
+            analysisResult = new AnalysisResult { ProjectId = projectId };
+            _dbContext.AnalysisResults.Add(analysisResult);
+        }
+        else
+        {
+            _dbContext.Warnings.RemoveRange(analysisResult.Warnings);
+            analysisResult.Warnings.Clear();
+
+            foreach (var duplicate in existing.Skip(1))
+                _dbContext.Warnings.RemoveRange(duplicate.Warnings);
+            _dbContext.AnalysisResults.RemoveRange(existing.Skip(1));
+        }
+
+        analysisResult.Score = Math.Max(0, score);
+        analysisResult.CreatedAt = DateTime.UtcNow;
+        foreach (var warning in warnings)
+            analysisResult.Warnings.Add(warning);
+
         await _dbContext.SaveChangesAsync();
 
         return analysisResult;

@@ -45,6 +45,9 @@ public class DashboardReportDto
 
         /// <summary>Uyarının ait olduğu endpoint yolu.</summary>
         public string? EndpointPath { get; set; }
+
+        /// <summary>İlgili endpoint için kaydedilmiş AI açıklaması (varsa).</summary>
+        public string? EndpointAiSummary { get; set; }
     }
 
     /// <summary>

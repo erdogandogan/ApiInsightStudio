@@ -12,6 +12,7 @@ interface WarningDto {
   endpointId?: number
   endpointMethod?: string
   endpointPath?: string
+  endpointAiSummary?: string
 }
 
 interface TestScenarioDto {
@@ -186,6 +187,18 @@ export default function ReportContent() {
 
   const securityWarnings = report?.warnings.filter(w => w.type === 'Security') ?? []
   const qualityWarnings  = report?.warnings.filter(w => w.type === 'Quality') ?? []
+
+  // Sunucuda kayıtlı AI açıklamaları esas alınır; tarayıcı deposundakiler yalnızca yedektir.
+  const aiDescriptions: Record<number, AiEntry> = { ...generatedDescriptions }
+  for (const w of report?.warnings ?? []) {
+    if (w.endpointId !== undefined && w.endpointAiSummary) {
+      aiDescriptions[w.endpointId] = {
+        description: w.endpointAiSummary,
+        method: w.endpointMethod ?? '',
+        path: w.endpointPath ?? '',
+      }
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100">
@@ -434,7 +447,7 @@ export default function ReportContent() {
             </div>
 
             {/* AI Açıklamaları */}
-            {Object.keys(generatedDescriptions).length > 0 && (
+            {Object.keys(aiDescriptions).length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
@@ -444,11 +457,11 @@ export default function ReportContent() {
                     <h2 className="text-gray-100 font-medium text-sm">AI Açıklamaları</h2>
                   </div>
                   <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-800">
-                    {Object.keys(generatedDescriptions).length}
+                    {Object.keys(aiDescriptions).length}
                   </span>
                 </div>
                 <ul className="space-y-2">
-                  {Object.entries(generatedDescriptions).map(([endpointId, entry]) => (
+                  {Object.entries(aiDescriptions).map(([endpointId, entry]) => (
                     <li key={endpointId} className="bg-gray-950 border border-gray-800 rounded-md p-3">
                       <div className="flex items-center gap-2 mb-1.5">
                         {entry.method && <MethodBadge method={entry.method} />}
