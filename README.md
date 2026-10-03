@@ -56,3 +56,20 @@ Alıcı, kendi sırrıyla aynı imzayı hesaplayıp karşılaştırmalı ve `X-T
 **Güvenlik (SSRF):** Webhook adresi yalnızca `https` olabilir; kullanıcı adı/parola içeremez. Loopback, özel ağ (10/8, 172.16/12, 192.168/16), link-local (bulut metadata `169.254.169.254` dahil), CGNAT ve ayrılmış adreslere (IPv6 ve IPv4-gömülü biçimler dahil) bildirim gönderilmez. Kontrol hem kayıt anında hem de bağlantının kurulduğu anda, bağlanılacak IP üzerinde yapılır (DNS rebinding'e karşı); yönlendirmeler izlenmez, proxy kullanılmaz. Yalnızca geliştirme için, `Notifications:AllowedPrivateHosts` listesine yazılan adlar bu kuraldan muaf tutulur (bu adlar için düz `http` de kabul edilir); üretimde boş bırakın.
 
 **Tek sunucu varsayımı:** Çakışmayı önlemek için olay ve teslimat işleme süreç içi kilitle serileştirilir. Birden fazla sunucuya ölçeklenirse veritabanı düzeyinde bir kilit gerekir.
+
+#### Telegram kanalı
+Uyarılar, sunucuda yapılandırılmış bir Telegram botu aracılığıyla bir sohbete de gönderilebilir. Bot token'ı ve sohbet kimliği **gizli bilgidir**: yalnızca kendi terminalinizde `dotnet user-secrets` ile verilir, dosyaya ve repoya yazılmaz.
+
+1. Telegram'da `@BotFather`'a `/newbot` yazıp botu oluşturun; verdiği token'ı (`123456789:AAH...`) not alın.
+2. Kendi botunuza gidip `/start` yazın (bot, siz yazmadan size mesaj atamaz).
+3. Tarayıcıda `https://api.telegram.org/bot<TOKEN>/getUpdates` adresini açıp `"chat":{"id":...}` içindeki sayıyı alın (bu adres token içerir, paylaşmayın).
+4. Terminalde:
+   ```bash
+   cd api
+   dotnet user-secrets set "Telegram:BotToken" "<TOKEN>"
+   dotnet user-secrets set "Telegram:ChatId" "<CHAT_ID>"
+   ```
+
+Sonra projede `PUT /api/automation/{projectId}/settings` ile `notifyTelegram: true` verin (Telegram sunucuda yapılandırılmamışsa 400 döner; ayarlar cevabındaki `telegramAvailable` bunu gösterir). `POST /api/automation/{projectId}/test-notification` gerçek bir uyarı kaydı oluşturmadan, "TEST" kuralıyla yapılandırılmış kanallara bir bildirim gönderir ve her kanalın sonucunu hemen döndürür.
+
+Güvenlik notları: Token Telegram'ın istek adresinde yer aldığı için `HttpClient`'ın varsayılan günlükleri bu istemci için kapatılmıştır (aksi halde adres, yani token, günlüğe yazılırdı); hata metinleri ve veritabanı kayıtları token taşımaz. Token ve sohbet kimliği biçimi gönderilmeden önce doğrulanır. Mesajlar düz metindir (HTML/Markdown işlenmez). Telegram 400/401/403/404 döndürürse (yanlış token, sohbet bulunamadı, bot engellenmiş) teslimat yeniden denenmeden hemen `Dead` olur; 429 ve 5xx geçici hata sayılıp geri çekilmeyle yeniden denenir.

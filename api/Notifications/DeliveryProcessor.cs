@@ -114,7 +114,9 @@ public class DeliveryProcessor
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Teslimat {DeliveryId} ({Channel}) gönderilirken beklenmeyen hata.", delivery.Id, delivery.Channel);
+            // İstisnanın kendisi/metni günlüğe konmaz: bir kanalın adresi veya token'ı hata metninde geçebilir.
+            _logger.LogWarning("Teslimat {DeliveryId} ({Channel}) gönderilirken beklenmeyen hata: {ExceptionType}.",
+                delivery.Id, delivery.Channel, ex.GetType().Name);
             return DeliveryResult.Failed(null, $"Beklenmeyen hata: {ex.GetType().Name}.");
         }
     }

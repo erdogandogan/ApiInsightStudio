@@ -19,9 +19,15 @@ namespace ApiInsightStudio.Api.Tests;
 /// "Testing" ortamı kullanılır; böylece Development'a özgü user-secrets yüklenmez ve gerçek anahtarlara dokunulmaz.
 /// JWT anahtarı her çalıştırmada rastgele üretilir.
 /// </summary>
-public sealed class ApiFactory : WebApplicationFactory<Program>
+public class ApiFactory : WebApplicationFactory<Program>
 {
     private readonly SqliteConnection _connection = new("DataSource=:memory:");
+
+    /// <summary>Türetilmiş fabrikaların ek yapılandırma değerleri (örn. sahte Telegram ayarları).</summary>
+    protected virtual IReadOnlyDictionary<string, string> ExtraSettings { get; } = new Dictionary<string, string>();
+
+    /// <summary>Türetilmiş fabrikaların ek servis kayıtları (örn. sahte HTTP işleyicileri).</summary>
+    protected virtual void ConfigureExtraServices(IServiceCollection services) { }
 
     public const string OllamaReplyText = "Ürünleri listeler.";
 
@@ -38,6 +44,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("Jwt:Audience", "test-audience");
         // Arka plan işçisi testlerde kapalı: işleme, testlerin kontrolünde (doğrudan çağrılarak) yapılır.
         builder.UseSetting("Notifications:WorkerEnabled", "false");
+        foreach (var (key, value) in ExtraSettings)
+            builder.UseSetting(key, value);
 
         builder.ConfigureServices(services =>
         {
@@ -50,6 +58,8 @@ public sealed class ApiFactory : WebApplicationFactory<Program>
 
             services.AddHttpClient<AiService>()
                 .ConfigurePrimaryHttpMessageHandler(() => new FakeOllamaHandler(this));
+
+            ConfigureExtraServices(services);
         });
     }
 

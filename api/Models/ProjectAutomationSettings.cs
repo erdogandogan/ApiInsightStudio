@@ -23,6 +23,9 @@ public class ProjectAutomationSettings
     /// <summary>Kapalıysa bu proje için hiçbir uyarı kuralı çalışmaz.</summary>
     public bool Enabled { get; set; } = true;
 
+    /// <summary>Uyarılar sunucuda yapılandırılmış Telegram sohbetine de gönderilsin mi?</summary>
+    public bool NotifyTelegram { get; set; }
+
     /// <summary>Uyarıların imzalı POST ile gönderileceği adres. Boşsa webhook kanalı kapalıdır.</summary>
     public string? WebhookUrl { get; set; }
 

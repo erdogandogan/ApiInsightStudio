@@ -85,6 +85,59 @@ public class AlertRaisedHandlerTests
         Assert.Empty(Deliveries(db, projectId));
     }
 
+    private static void SetChannels(TestDb db, int projectId, string? webhookUrl, bool telegram)
+    {
+        using var context = db.CreateContext();
+        context.ProjectAutomationSettings.Add(new ProjectAutomationSettings
+        {
+            ProjectId = projectId, WebhookUrl = webhookUrl, NotifyTelegram = telegram
+        });
+        context.SaveChanges();
+    }
+
+    [Fact]
+    public async Task Yalniz_Telegram_aciksa_yalniz_telegram_teslimati_acilir()
+    {
+        using var db = new TestDb();
+        var projectId = db.SeedProject(db.SeedUser());
+        SetChannels(db, projectId, webhookUrl: null, telegram: true);
+
+        await HandleAsync(db, Alert(projectId));
+
+        var delivery = Assert.Single(Deliveries(db, projectId));
+        Assert.Equal("telegram", delivery.Channel);
+    }
+
+    [Fact]
+    public async Task Iki_kanal_da_aciksa_ayni_olay_icin_iki_ayri_teslimat_acilir()
+    {
+        using var db = new TestDb();
+        var projectId = db.SeedProject(db.SeedUser());
+        SetChannels(db, projectId, "https://hooks.example.com/alerts", telegram: true);
+        var alert = Alert(projectId);
+
+        await HandleAsync(db, alert);
+
+        var deliveries = Deliveries(db, projectId);
+        Assert.Equal(2, deliveries.Count);
+        Assert.Equal(new[] { "telegram", "webhook" }, deliveries.Select(d => d.Channel).OrderBy(c => c).ToArray());
+        Assert.All(deliveries, d => Assert.Equal(alert.EventId, d.EventId));
+    }
+
+    [Fact]
+    public async Task Iki_kanalda_ayni_olay_tekrar_islenirse_hala_iki_teslimat_kalir()
+    {
+        using var db = new TestDb();
+        var projectId = db.SeedProject(db.SeedUser());
+        SetChannels(db, projectId, "https://hooks.example.com/alerts", telegram: true);
+        var alert = Alert(projectId);
+
+        await HandleAsync(db, alert);
+        await HandleAsync(db, alert);
+
+        Assert.Equal(2, Deliveries(db, projectId).Count);
+    }
+
     [Fact]
     public async Task Ayar_satiri_yoksa_teslimat_acilmaz()
     {

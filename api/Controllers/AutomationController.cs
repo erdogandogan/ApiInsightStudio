@@ -1,5 +1,6 @@
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.DTOs;
+using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Extensions;
 using ApiInsightStudio.Api.Models;
 using ApiInsightStudio.Api.Notifications;
@@ -18,13 +19,27 @@ public class AutomationController : ControllerBase
     private readonly AppDbContext _context;
     private readonly WebhookSecretProtector _secrets;
     private readonly NotificationOptions _notificationOptions;
+    private readonly TelegramOptions _telegramOptions;
+    private readonly IEventPublisher _events;
+    private readonly OutboxDispatcher _dispatcher;
+    private readonly DeliveryProcessor _deliveries;
 
     public AutomationController(
-        AppDbContext context, WebhookSecretProtector secrets, IOptions<NotificationOptions> notificationOptions)
+        AppDbContext context,
+        WebhookSecretProtector secrets,
+        IOptions<NotificationOptions> notificationOptions,
+        IOptions<TelegramOptions> telegramOptions,
+        IEventPublisher events,
+        OutboxDispatcher dispatcher,
+        DeliveryProcessor deliveries)
     {
         _context = context;
         _secrets = secrets;
         _notificationOptions = notificationOptions.Value;
+        _telegramOptions = telegramOptions.Value;
+        _events = events;
+        _dispatcher = dispatcher;
+        _deliveries = deliveries;
     }
 
     /// <summary>Projenin otomasyon ayarlarını döndürür; kayıt yoksa varsayılanları gösterir.</summary>
@@ -58,6 +73,9 @@ public class AutomationController : ControllerBase
         if (!await OwnsProjectAsync(projectId, userId))
             return NotFound(new { message = "Proje bulunamadı." });
 
+        if (dto.NotifyTelegram && !_telegramOptions.IsConfigured)
+            return BadRequest(new { message = "Telegram bu sunucuda yapılandırılmamış (Telegram:BotToken ve Telegram:ChatId user-secrets ile verilmeli)." });
+
         var webhookUrl = string.IsNullOrWhiteSpace(dto.WebhookUrl) ? null : dto.WebhookUrl.Trim();
         if (webhookUrl is not null)
         {
@@ -76,6 +94,7 @@ public class AutomationController : ControllerBase
         settings.ScoreThreshold = dto.ScoreThreshold;
         settings.NotifyOnMissingAuth = dto.NotifyOnMissingAuth;
         settings.Enabled = dto.Enabled;
+        settings.NotifyTelegram = dto.NotifyTelegram;
         settings.WebhookUrl = webhookUrl;
 
         string? newSecret = null;
@@ -116,6 +135,59 @@ public class AutomationController : ControllerBase
         await _context.SaveChangesAsync();
 
         return Ok(new { webhookSecret = secret });
+    }
+
+    /// <summary>
+    /// Yapılandırılmış kanallara gerçek bir uyarı gibi ama "TEST" kuralıyla bir bildirim gönderir ve sonucu hemen döndürür.
+    /// Webhook veya Telegram kurulumunu denemek içindir; uyarı kaydı (Alert) oluşturmaz.
+    /// </summary>
+    [HttpPost("{projectId}/test-notification")]
+    public async Task<IActionResult> SendTestNotification([FromRoute] int projectId)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized(new { message = "Geçerli bir kullanıcı bilgisi bulunamadı." });
+
+        if (!await OwnsProjectAsync(projectId, userId))
+            return NotFound(new { message = "Proje bulunamadı." });
+
+        var settings = await _context.ProjectAutomationSettings
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.ProjectId == projectId);
+
+        var hasWebhook = !string.IsNullOrWhiteSpace(settings?.WebhookUrl);
+        var hasTelegram = settings?.NotifyTelegram == true;
+        if (!hasWebhook && !hasTelegram)
+            return BadRequest(new { message = "Önce bir bildirim kanalı ayarlayın (webhook adresi veya Telegram)." });
+
+        var alert = new AlertRaised(
+            projectId, "TEST", "Bu bir test bildirimidir; gerçek bir uyarı değildir.", "Info", DateTime.UtcNow, Guid.NewGuid());
+        _events.Publish(alert);
+        await _context.SaveChangesAsync();
+
+        // Teslimat satırlarını aç ve gönder; sonucu beklemeden dönmek yerine hemen göster
+        await _dispatcher.DispatchPendingAsync(HttpContext.RequestAborted);
+        await _deliveries.ProcessDueAsync(HttpContext.RequestAborted);
+
+        var results = await _context.NotificationDeliveries
+            .AsNoTracking()
+            .Where(d => d.EventId == alert.EventId)
+            .OrderBy(d => d.Id)
+            .Select(d => new DeliveryDto
+            {
+                Id = d.Id,
+                EventId = d.EventId,
+                Channel = d.Channel,
+                Status = d.Status,
+                Attempts = d.Attempts,
+                NextAttemptAt = d.NextAttemptAt,
+                LastStatusCode = d.LastStatusCode,
+                LastError = d.LastError,
+                CreatedAt = d.CreatedAt,
+                CompletedAt = d.CompletedAt
+            })
+            .ToListAsync();
+
+        return Ok(new { eventId = alert.EventId, deliveries = results });
     }
 
     /// <summary>Projenin uyarılarını (en yeni önce) listeler. İsteğe bağlı olarak status=Open|Resolved ile süzülür.</summary>
@@ -197,12 +269,14 @@ public class AutomationController : ControllerBase
     private Task<bool> OwnsProjectAsync(int projectId, int userId) =>
         _context.Projects.AnyAsync(p => p.Id == projectId && p.UserId == userId);
 
-    private static AutomationSettingsResponseDto ToDto(ProjectAutomationSettings settings) => new()
+    private AutomationSettingsResponseDto ToDto(ProjectAutomationSettings settings) => new()
     {
         ScoreThreshold = settings.ScoreThreshold,
         NotifyOnMissingAuth = settings.NotifyOnMissingAuth,
         Enabled = settings.Enabled,
+        NotifyTelegram = settings.NotifyTelegram,
         WebhookUrl = settings.WebhookUrl,
-        WebhookSecretConfigured = !string.IsNullOrEmpty(settings.WebhookSecretProtected)
+        WebhookSecretConfigured = !string.IsNullOrEmpty(settings.WebhookSecretProtected),
+        TelegramAvailable = _telegramOptions.IsConfigured
     };
 }

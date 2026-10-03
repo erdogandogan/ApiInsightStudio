@@ -61,6 +61,8 @@ builder.Services.AddHttpClient(WebhookChannel.HttpClientName, client => client.T
     .ConfigurePrimaryHttpMessageHandler(sp =>
         SafeHttp.CreateHandler(sp.GetRequiredService<IOptions<NotificationOptions>>().Value.AllowedPrivateHosts));
 builder.Services.AddScoped<INotificationChannel, WebhookChannel>();
+builder.Services.Configure<TelegramOptions>(builder.Configuration.GetSection(TelegramOptions.SectionName));
+builder.Services.AddTelegramChannel();
 builder.Services.AddScoped<IEventHandler<AlertRaised>, AlertRaisedHandler>();
 builder.Services.AddScoped<DeliveryProcessor>();
 if (builder.Configuration.GetValue(
