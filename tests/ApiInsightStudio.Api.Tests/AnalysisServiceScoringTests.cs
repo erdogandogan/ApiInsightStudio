@@ -8,7 +8,7 @@ public class AnalysisServiceScoringTests
     private static async Task<Api.Models.AnalysisResult> AnalyzeAsync(TestDb db, int projectId)
     {
         await using var context = db.CreateContext();
-        return await new AnalysisService(context).AnalyzeProjectAsync(projectId);
+        return await TestServices.CreateAnalysisService(context).AnalyzeProjectAsync(projectId);
     }
 
     [Fact]

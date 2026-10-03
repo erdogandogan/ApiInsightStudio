@@ -1,4 +1,5 @@
 using ApiInsightStudio.Api.Data;
+using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -7,11 +8,15 @@ namespace ApiInsightStudio.Api.Services;
 public class AnalysisService
 {
     private readonly AppDbContext _dbContext;
+    private readonly IEventPublisher _events;
+    private readonly OutboxDispatcher _dispatcher;
 
-    /// <summary>Veritabanı erişimi için gerekli DbContext bağımlılığını alır.</summary>
-    public AnalysisService(AppDbContext dbContext)
+    /// <summary>Veritabanı erişimi ve olay altyapısı bağımlılıklarını alır.</summary>
+    public AnalysisService(AppDbContext dbContext, IEventPublisher events, OutboxDispatcher dispatcher)
     {
         _dbContext = dbContext;
+        _events = events;
+        _dispatcher = dispatcher;
     }
 
     /// <summary>Verilen projedeki endpoint'leri kurallara göre analiz ederek sonucu kaydeder.</summary>
@@ -67,7 +72,7 @@ public class AnalysisService
                 warnings.Add(new Warning
                 {
                     EndpointId = endpoint.Id,
-                    Message = "Kritik uç noktada Authentication (Kimlik Doğrulama) tanımı eksik.",
+                    Message = WarningMessages.MissingAuthentication,
                     Severity = "High",
                     Type = "Security"
                 });
@@ -136,7 +141,13 @@ public class AnalysisService
         foreach (var warning in warnings)
             analysisResult.Warnings.Add(warning);
 
+        // Olay, analizle aynı işlemde outbox'a yazılır: analiz kaydedildiyse olay da kesin kaydedilmiştir.
+        _events.Publish(new AnalysisCompleted(projectId, DateTime.UtcNow));
+
         await _dbContext.SaveChangesAsync();
+
+        // Şimdilik olay hemen işlenir (kurallar çalışır). Aşama 2'de bunu arka plan servisi yapacak.
+        await _dispatcher.DispatchPendingAsync();
 
         return analysisResult;
     }
