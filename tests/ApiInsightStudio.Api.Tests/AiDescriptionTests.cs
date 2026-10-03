@@ -5,6 +5,7 @@ using ApiInsightStudio.Api.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 
 namespace ApiInsightStudio.Api.Tests;
 
@@ -21,16 +22,20 @@ public class AiDescriptionTests
             => Task.FromResult(_respond());
     }
 
+    /// <summary>OpenAI uyumlu /v1/chat/completions cevabı.</summary>
     private static HttpResponseMessage OllamaReply(string text) =>
         new(System.Net.HttpStatusCode.OK)
         {
-            Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new { response = text }))
+            Content = new StringContent(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                choices = new[] { new { message = new { role = "assistant", content = text } } }
+            }))
         };
 
     private static ProjectController CreateController(
         Data.AppDbContext context, int userId, Func<HttpResponseMessage> ollama)
     {
-        var aiService = new AiService(new HttpClient(new FakeHandler(ollama)));
+        var aiService = new AiService(new HttpClient(new FakeHandler(ollama)), Options.Create(new AiOptions()));
         var controller = new ProjectController(
             context,
             new ConfigurationBuilder().Build(),
@@ -112,6 +117,43 @@ public class AiDescriptionTests
                 () => throw new HttpRequestException("bağlantı reddedildi"));
             var result = await controller.GenerateAiDescription(projectId, endpointId);
             Assert.Equal(503, Assert.IsType<ObjectResult>(result).StatusCode);
+        }
+
+        await using var check = db.CreateContext();
+        Assert.Null(check.Endpoints.Single(e => e.Id == endpointId).AiSummary);
+    }
+
+    [Fact]
+    public async Task Servis_hata_kodu_donerse_502_doner_ve_model_adini_hatirlatir()
+    {
+        using var db = new TestDb();
+        var (userId, projectId, endpointId) = SeedAnalyzedProject(db);
+
+        await using (var context = db.CreateContext())
+        {
+            var controller = CreateController(context, userId,
+                () => new HttpResponseMessage(System.Net.HttpStatusCode.NotFound));
+            var result = (ObjectResult)await controller.GenerateAiDescription(projectId, endpointId);
+
+            Assert.Equal(502, result.StatusCode);
+            Assert.Contains("qwen2.5:7b", System.Text.Json.JsonSerializer.Serialize(result.Value));
+        }
+
+        await using var check = db.CreateContext();
+        Assert.Null(check.Endpoints.Single(e => e.Id == endpointId).AiSummary);
+    }
+
+    [Fact]
+    public async Task Bos_cevap_502_doner_ve_AiSummary_bos_kalir()
+    {
+        using var db = new TestDb();
+        var (userId, projectId, endpointId) = SeedAnalyzedProject(db);
+
+        await using (var context = db.CreateContext())
+        {
+            var controller = CreateController(context, userId, () => OllamaReply("   "));
+            var result = await controller.GenerateAiDescription(projectId, endpointId);
+            Assert.Equal(502, Assert.IsType<ObjectResult>(result).StatusCode);
         }
 
         await using var check = db.CreateContext();
