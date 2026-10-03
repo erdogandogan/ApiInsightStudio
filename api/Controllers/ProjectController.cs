@@ -241,7 +241,8 @@ public class ProjectController : ControllerBase
                         Type = w.Type,
                         EndpointId = w.EndpointId,
                         EndpointMethod = ep?.Method,
-                        EndpointPath = ep?.Path
+                        EndpointPath = ep?.Path,
+                        EndpointAiSummary = ep?.AiSummary
                     };
                 })
                 .ToList() ?? new(),
@@ -289,25 +290,8 @@ public class ProjectController : ControllerBase
             return StatusCode(502, new { message = $"AI servisi şu an kullanılamıyor: {ex.Message}" });
         }
 
-        endpoint.Summary = description;
-
-        var warningsToDelete = await _context.Warnings
-            .Where(w => w.EndpointId == endpointId && w.Message == "Endpoint açıklaması eksik")
-            .ToListAsync();
-
-        if (warningsToDelete.Count > 0)
-        {
-            _context.Warnings.RemoveRange(warningsToDelete);
-
-            var affectedAnalysisResultIds = warningsToDelete.Select(w => w.AnalysisResultId).Distinct();
-            var analysisResults = await _context.AnalysisResults
-                .Where(ar => affectedAnalysisResultIds.Contains(ar.Id))
-                .ToListAsync();
-
-            foreach (var ar in analysisResults)
-                ar.Score = Math.Min(100, ar.Score + 10);
-        }
-
+        // AI çıktısı yalnızca AiSummary'ye yazılır: Summary, skor ve uyarılar OpenAPI dokümanını yansıtmaya devam eder.
+        endpoint.AiSummary = description;
         await _context.SaveChangesAsync();
 
         return Ok(new { message = "AI açıklaması başarıyla oluşturuldu.", description });
