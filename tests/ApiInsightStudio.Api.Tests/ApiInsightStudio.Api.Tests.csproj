@@ -24,6 +24,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\api\ApiInsightStudio.Api.csproj" />
+    <ProjectReference Include="..\..\eval\AiEval\AiEval.csproj" />
   </ItemGroup>
 
 </Project>

@@ -1,0 +1,66 @@
+{
+  "id": "sifirin-altina-inmez",
+  "description": "Çok kötü üç endpoint: skor 0'da durur",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "sifirin-altina-inmez",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/a/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            }
+          }
+        }
+      },
+      "/b/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            }
+          }
+        }
+      },
+      "/c/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 3,
+    "score": 0,
+    "findings": [
+      "DELETE /a/{id} BOLA_DELETE_ID",
+      "DELETE /a/{id} NO_AUTH",
+      "DELETE /a/{id} NO_ERROR_CODES",
+      "DELETE /a/{id} NO_SUMMARY",
+      "DELETE /b/{id} BOLA_DELETE_ID",
+      "DELETE /b/{id} NO_AUTH",
+      "DELETE /b/{id} NO_ERROR_CODES",
+      "DELETE /b/{id} NO_SUMMARY",
+      "DELETE /c/{id} BOLA_DELETE_ID",
+      "DELETE /c/{id} NO_AUTH",
+      "DELETE /c/{id} NO_ERROR_CODES",
+      "DELETE /c/{id} NO_SUMMARY"
+    ]
+  }
+}

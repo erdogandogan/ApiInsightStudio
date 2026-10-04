@@ -1,0 +1,46 @@
+{
+  "id": "herkese-acik-login",
+  "description": "POST /auth/login bilerek herkese açık",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "herkese-acik-login",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/auth/login": {
+        "post": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "401": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 80,
+    "findings": [
+      "POST /auth/login NO_AUTH"
+    ]
+  },
+  "ideal": {
+    "score": 100,
+    "findings": [],
+    "note": "Giriş uç noktası bilerek kimliksizdir; kural herkese açık amacı ayırt edemez (yanlış pozitif)."
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "id": "get-delete-yolu",
+  "description": "GET ile 'delete' içeren yol",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "get-delete-yolu",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/delete": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 90,
+    "findings": [
+      "GET /items/delete GET_MUTATES"
+    ]
+  }
+}

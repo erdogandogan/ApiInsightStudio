@@ -1,0 +1,41 @@
+{
+  "id": "delete-kimliksiz-idsiz",
+  "description": "DELETE {id} içermeyen yol, kimliksiz",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "delete-kimliksiz-idsiz",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 80,
+    "findings": [
+      "DELETE /items NO_AUTH"
+    ]
+  }
+}

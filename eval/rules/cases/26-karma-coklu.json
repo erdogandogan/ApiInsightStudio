@@ -1,0 +1,63 @@
+{
+  "id": "karma-coklu",
+  "description": "Üç endpoint: temiz GET, bozuk POST, bozuk DELETE",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "karma-coklu",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        },
+        "post": {
+          "responses": {
+            "201": {
+              "description": "d"
+            }
+          }
+        }
+      },
+      "/items/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 3,
+    "score": 5,
+    "findings": [
+      "DELETE /items/{id} BOLA_DELETE_ID",
+      "DELETE /items/{id} NO_AUTH",
+      "DELETE /items/{id} NO_ERROR_CODES",
+      "POST /items NO_AUTH",
+      "POST /items NO_ERROR_CODES",
+      "POST /items NO_SUMMARY"
+    ]
+  }
+}

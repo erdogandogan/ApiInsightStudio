@@ -1,0 +1,46 @@
+{
+  "id": "patch-kimliksiz",
+  "description": "PATCH kimliksiz: kritik metot listesinde yok",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "patch-kimliksiz",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/{itemId}": {
+        "patch": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  },
+  "ideal": {
+    "score": 80,
+    "findings": [
+      "PATCH /items/{itemId} NO_AUTH"
+    ],
+    "note": "Yalnızca POST/PUT/DELETE kritik sayılır; PATCH kaçar (yanlış negatif)."
+  }
+}

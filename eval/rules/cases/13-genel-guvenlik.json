@@ -1,0 +1,44 @@
+{
+  "id": "genel-guvenlik",
+  "description": "Güvenlik yalnızca doküman seviyesinde: endpoint'lere uygulanır",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "genel-guvenlik",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "post": {
+          "responses": {
+            "201": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  }
+}

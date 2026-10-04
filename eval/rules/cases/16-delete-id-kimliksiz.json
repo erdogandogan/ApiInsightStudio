@@ -1,0 +1,42 @@
+{
+  "id": "delete-id-kimliksiz",
+  "description": "DELETE /items/{id}, kimliksiz: kimlik + BOLA",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "delete-id-kimliksiz",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 65,
+    "findings": [
+      "DELETE /items/{id} BOLA_DELETE_ID",
+      "DELETE /items/{id} NO_AUTH"
+    ]
+  }
+}

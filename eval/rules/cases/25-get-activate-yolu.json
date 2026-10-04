@@ -1,0 +1,46 @@
+{
+  "id": "get-activate-yolu",
+  "description": "GET ile kalıcı işlem ama 'delete/remove/update' sözcüğü geçmiyor",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "get-activate-yolu",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/{itemId}/activate": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  },
+  "ideal": {
+    "score": 90,
+    "findings": [
+      "GET /items/{itemId}/activate GET_MUTATES"
+    ],
+    "note": "Üç sözcüklük liste dışındaki fiiller kaçar (yanlış negatif)."
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "id": "aciklama-eksik",
+  "description": "Tek endpoint, açıklama yok",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "aciklama-eksik",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          }
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 90,
+    "findings": [
+      "GET /items NO_SUMMARY"
+    ]
+  }
+}

@@ -1,0 +1,1745 @@
+{
+  "generatedUtc": "2026-10-04T21:47:13.8834427Z",
+  "baseUrl": "http://localhost:11434",
+  "hardware": "Intel Core i5-10300H, 16 GB RAM, NVIDIA GTX 1650 Ti 4 GB, Windows 11, Ollama 0.35.1",
+  "runs": [
+    {
+      "Model": "qwen2.5:7b",
+      "Items": [
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' endpointi, kayıtlı Tüm ürünleri getirir.",
+          "Error": null,
+          "Seconds": 3.89,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' endpointi, kullanıcılarına kayıtlı ürünlerin listesini sağlar.",
+          "Error": null,
+          "Seconds": 3.82,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' uç nokta, GET metoduyla ürünleri almak için kullanılır.",
+          "Error": null,
+          "Seconds": 3.95,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "'/items' endpointi, yeni ürün kaydı için kullanılır.",
+          "Error": null,
+          "Seconds": 3.48,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "'/items' uç noktasına POST isteği ile ürün kaydı yapılıyor.",
+          "Error": null,
+          "Seconds": 2.88,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "'/items' endpointi, yeni ürün eklemek için kullanılır.",
+          "Error": null,
+          "Seconds": 3.04,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi, belirli bir öğeyi güncelleme işlemi yapar.",
+          "Error": null,
+          "Seconds": 4.77,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "Bu endpoint, belirli bir mallının bilgisini güncelleme işlemi yapar.",
+          "Error": null,
+          "Seconds": 3.82,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi, belirli bir öğeyi güncelleme için kullanılır.",
+          "Error": null,
+          "Seconds": 4.51,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "'/me' endpointi, kullanıcı hakkında bilgi döndürür.",
+          "Error": null,
+          "Seconds": 3.56,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "'/me' endpointi, kullanıcının profil bilgilerini almak için kullanılır.",
+          "Error": null,
+          "Seconds": 3.71,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "Kullanıcının profil bilgilerini almak için kullanılır.",
+          "Error": null,
+          "Seconds": 3.07,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "Bu endpoint, belirli bir ürün veya maddenin bilgisini almak için kullanılır.",
+          "Error": null,
+          "Seconds": 4.58,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "Bu endpoint, belirli bir itemID'sine sahip ürün hakkında bilgi almak için kullanılır.",
+          "Error": null,
+          "Seconds": 4.35,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "Bu endpoint, belirli bir itemID'ye sahip ürün bilgilerini almanı sağlar.",
+          "Error": null,
+          "Seconds": 4.71,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' endpointi, belirli bir ürünün silinmesi için kullanılır.",
+          "Error": null,
+          "Seconds": 4.36,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' endpointi silecek işlem için kullanılır.",
+          "Error": null,
+          "Seconds": 2.48,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' uç noktasını silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 2.49,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "'/items/{id}' uç noktaları, belirli bir öğeyi silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 5.06,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "'/items/{id}' endpointi, belirtilen{id} kimlikli öğeyi silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 5.03,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "'items' koleksiyonundan belirtilen ID'ye sahip öğeyi siler.",
+          "Error": null,
+          "Seconds": 4.76,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi, belirtilenItemId'yi silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.26,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "Bu endpoint, belirli birgetItemId的商品项进行删除。",
+          "Error": null,
+          "Seconds": 2.62,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": false,
+            "NoForbiddenContent": true,
+            "Turkish": false,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "'{itemId} olarak belirtilen öğeyi siler.'",
+          "Error": null,
+          "Seconds": 2.91,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": false,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "Bu endpoint, belirtilen ürünün silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 3.55,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "Bu endpoint, bir.getItem.id'nin belirtilmediği durumda öğeyi silmeye çalışır.",
+          "Error": null,
+          "Seconds": 4.42,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "'/items/delete' endpointi, belirli bir ürünün silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 4.08,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "Kullanıcı bilgilerini güncelleme amacıyla API çağırmak.",
+          "Error": null,
+          "Seconds": 3.81,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "Bu endpoint, kullanıcı bilgilerinin güncellenmesi için kullanılır.",
+          "Error": null,
+          "Seconds": 2.92,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "Kullanıcı bilgilerinin güncellenmesi için kullanılır.",
+          "Error": null,
+          "Seconds": 2.36,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "'/cache/remove' endpointi, temsilciye ait önbellek-cache verilerini silme işlemi yapar.",
+          "Error": null,
+          "Seconds": 5.46,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "'/cache/remove' endpointi, önbellek öğesinin silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 4.06,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "'/cache/remove' endpointi, bellekten veri silmek için kullanıl__/_.",
+          "Error": null,
+          "Seconds": 3.55,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "'/updates' endpointi, kullanıcılarına en son güncellemeleri sunar.",
+          "Error": null,
+          "Seconds": 3.67,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "'/updates' endpointi, kullanıcılara en son güncellemeleri almak için çağrılır.",
+          "Error": null,
+          "Seconds": 4.07,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "'/updates' endpointi, en son güncellemeleri almak için çağrılır.",
+          "Error": null,
+          "Seconds": 3.75,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "'/auth/login' endpointi, kullanıcı oturumu açmak için kullanılır.",
+          "Error": null,
+          "Seconds": 3.73,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "Kullanıcı adı ve şifre ile kullanıcıyı kimlik doğrulamak.",
+          "Error": null,
+          "Seconds": 3.55,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "Kullanıcı adı ve şifre ile oturum açmayı gerçekleştirmek için kullanılabilecek yetkilendirme isteği yollamak.",
+          "Error": null,
+          "Seconds": 7.14,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "Kullanıcıya ait bir bileşen güncellemesini yapar.",
+          "Error": null,
+          "Seconds": 3.79,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi, belirli bir öğeyi parçalaya@update ederek sunar.",
+          "Error": null,
+          "Seconds": 4.55,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi, belirli bir öğeyi parçalayarak günceller.",
+          "Error": null,
+          "Seconds": 4.58,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "'items' koleksiyonunda belirli bir öğeyi aktiflestirmek için kullanılır.",
+          "Error": null,
+          "Seconds": 5.05,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "Bu endpoint, belirtilen ürün ögesinin aktivasyonunu işlemeye izin verir.",
+          "Error": null,
+          "Seconds": 4.53,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "Bu endpoint, belirli bir öğeyi etkinleştirmek için kullanılır.",
+          "Error": null,
+          "Seconds": 3.98,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "'/a/{id}' endpointi, belirtilen kimlikli kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.8,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "'/a/{id}' endpointi, belirtilen kimlikli kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.37,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "'/a/{id}' endpointi, belirli bir kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.06,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "'/b/{id}' end-pointi, belirli bir kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.38,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "'/b/{id}' endpointi, belirli bir kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 3.72,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "Bu endpoint, belirtilen tanımlayıcının (id) sahip kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.92,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "'/c/{id}' endpointsi, belirtilen tanımlayıcının corresponding kaydı silmek üzere çağrılır.",
+          "Error": null,
+          "Seconds": 5.37,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "'/c/{id}' endpointsi, belirli bir kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 3.81,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "'/c/{id}' endpointi, belirtilen identifier olan bir kaydı silmek için kullanılır.",
+          "Error": null,
+          "Seconds": 4.59,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        }
+      ]
+    },
+    {
+      "Model": "qwen2.5:3b",
+      "Items": [
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' endpointı kullanıcıdan bir ürün itemi seçme işlemlerini gerçekleştirmek için tasarlanmıştır.",
+          "Error": null,
+          "Seconds": 0.83,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' endpointi, veritabanında saklanan ürün bilgilerini pullama amacınıza sunar.",
+          "Error": null,
+          "Seconds": 0.52,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items",
+          "Output": "'/items' endpointi veritabanındaki urunleri listeler.",
+          "Error": null,
+          "Seconds": 0.3,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "'/items' endpoint, verilen ürün bilgilerinin kaydedilmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.78,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "HTTP POST '/items' endpointi kayıtlarını ekleme işlemine izin verir.",
+          "Error": null,
+          "Seconds": 0.44,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/items",
+          "Output": "'/items' endpoint HTTP POST çağrısının amacı, veritabanına yeni ürün bilgilerinin eklendiği.",
+          "Error": null,
+          "Seconds": 0.53,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PUT '/items/{itemId}' endpointi, belirtilen {itemId} değerli items veritabanını güncellemeyi sağlar.",
+          "Error": null,
+          "Seconds": 0.96,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PUT metoduyla '/items/{itemId}' endpoint, belirtilen {itemId} değerindeki ürünün güncellemesini yapar.",
+          "Error": null,
+          "Seconds": 0.6,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PUT",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PUT phươngumdaki '/items/{itemId}' endpoint, belirli itemId'nın verilerini güncellemek için kullanılır.",
+          "Error": null,
+          "Seconds": 0.54,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "/Me endpointi, istekte kullanılan kapsayıcıdan belirlenebilir kullanıcının bilgilerini döndürür.",
+          "Error": null,
+          "Seconds": 0.9,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "'/me' endpointi kullanıcının profil bilgilerini GET yöntemiyle getirmeyi ifade eder.",
+          "Error": null,
+          "Seconds": 0.51,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/me",
+          "Output": "HTTP GET '/me' endpointi kullanıcının belgelenmiş ayrıntılarını GET metoduyla gösterir.",
+          "Error": null,
+          "Seconds": 0.48,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi veritabanındaki belirteçli ürünün detaylarını döndürmektir.",
+          "Error": null,
+          "Seconds": 0.93,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP GET metoduyla çağrılan '/items/{itemId}' endpoint, belirtilen {itemId} anahtar değeri ile ilişkilendirilmekte olan bir öğeyi getirme amacındadır.",
+          "Error": null,
+          "Seconds": 0.88,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP GET '/items/{itemId}' endpointi, belirtilen id değerine göre verilen ürün bilgilerini getirme işlevselliğine sahiptir.",
+          "Error": null,
+          "Seconds": 0.74,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' endpointi silme işlemi için kullanılır.",
+          "Error": null,
+          "Seconds": 0.63,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' endpoint'http DELETE metoduyla çağrıldığında eski stokları silecektir.",
+          "Error": null,
+          "Seconds": 0.48,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items",
+          "Output": "'/items' endpoint, verilen işlemle veri silmeye yardımcı olan HTTP DELETE requests'ini gerçekleştirerek yapılandırılmış.",
+          "Error": null,
+          "Seconds": 0.51,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "'/items/{id}' endpointi, belirlenen {id} değerine ait bir öğenin silinmesiyle sınırlı.",
+          "Error": null,
+          "Seconds": 0.97,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "HTTP DELETE '/items/{id}' endpointi işlevsiz hale getirir.",
+          "Error": null,
+          "Seconds": 0.38,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{id}",
+          "Output": "HTTP DELETE '/items/{id}' endpointi belirtilen {id} değerine sahip bir items kaynağının silinmesi ile kullanılır.",
+          "Error": null,
+          "Seconds": 0.62,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "/items/{itemId} endpointi, belirtilen {itemId} değerli verilerin silinmesi için kullanılır.",
+          "Error": null,
+          "Seconds": 0.84,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "'/items/{itemId}' endpointi通过 HTTP DELETE 메소드 호출led时用于删除指定ID的项目。",
+          "Error": null,
+          "Seconds": 0.46,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": false,
+            "NoForbiddenContent": true,
+            "Turkish": false,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP DELETE '/items/{itemId}' endpointi belirtilen itemId'nin silinesini içerir.",
+          "Error": null,
+          "Seconds": 0.43,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "'/items/delete' endpointi silinecek kaynakları silmek için kullanıluyor.",
+          "Error": null,
+          "Seconds": 0.75,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "'/items/delete' endpointi silinecek kayıtlarını silmeye olanak sağlar.",
+          "Error": null,
+          "Seconds": 0.41,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/delete",
+          "Output": "'/items/delete' endpoint, veritabanında belgenin silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.39,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "'/users/update' endpoint, kullanıcı verilerini güncellemeyi amaçlıyor.",
+          "Error": null,
+          "Seconds": 0.75,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "'/users/update' endpoint, kullanıcıyı güncellemek için kullanılır.",
+          "Error": null,
+          "Seconds": 0.3,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/users/update",
+          "Output": "'/users/update' endpoint, kendi bilgilerini güncellemek için kullanılır.",
+          "Error": null,
+          "Seconds": 0.38,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "'/cache/remove' endpointiokinvarımlarını kaldıramak için oluşturulmuştur.",
+          "Error": null,
+          "Seconds": 0.75,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "'/cache/remove' endpointi eksik bellekleme kaynaklarını silmektedir.",
+          "Error": null,
+          "Seconds": 0.37,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/cache/remove",
+          "Output": "/http cache silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.19,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "HTTP GET çağrısıyla '/updates' endpoint'in amacı Güncellemeleri listelemekten bahsediyor.",
+          "Error": null,
+          "Seconds": 0.8,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "'/updates' endpointi güncellenen verilerin listelenmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.36,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/updates",
+          "Output": "'/updates' endpointi güncel bilgileri ile ilgili.GET isteği yapısına dayalı返ユア。",
+          "Error": null,
+          "Seconds": 0.53,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": false,
+            "NoForbiddenContent": true,
+            "Turkish": false,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": false
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "'/auth/login' endpoint'ın amacı giriş yapan bilgiler ile API'nizi oturumu açmak için tasarlanmıştır.",
+          "Error": null,
+          "Seconds": 0.92,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "'/auth/login' endpointsinin amacı güldürme ve kullanıcı adı ve parola doğrulanma gerçekleştirilmesi.",
+          "Error": null,
+          "Seconds": 0.5,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "POST",
+          "Path": "/auth/login",
+          "Output": "'/auth/login' endpointi doğrulanmış kullanıcı bilgileri ile giriş yapma işlemini içerir.",
+          "Error": null,
+          "Seconds": 0.47,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PATCH metodu ile '/items/{itemId}' endpoint, belirli ürünün (veya veri yapısına) verilerini güncellemek için kullanılarak anlaşılır hale getirilir.",
+          "Error": null,
+          "Seconds": 1.26,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PATCH metodu ile yapılan '/items/{itemId}' endpoint İşlemi, belgelenen ürünün veya öğenin özelliklerini güncellemek için kullanılır.",
+          "Error": null,
+          "Seconds": 0.69,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "PATCH",
+          "Path": "/items/{itemId}",
+          "Output": "HTTP PATCH '/items/{itemId}' endpointi, verilen itemId değerli itemsin belirtilen özellikleri güncellemek için kullanılır.",
+          "Error": null,
+          "Seconds": 0.55,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "'/items/{itemId}/activate' endpointi aktif kategorilere tanınan ürünleri etkinleştirme amaçlı oluşturulmuştur.",
+          "Error": null,
+          "Seconds": 0.97,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": false,
+            "All": false
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "HTTP GET '/items/{itemId}/activate' endpointinin amacı, veritabanındaki belirtilen itemin etkinleştirilmesidir.",
+          "Error": null,
+          "Seconds": 0.61,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "GET",
+          "Path": "/items/{itemId}/activate",
+          "Output": "'/items/{itemId}/activate' endpointi, veritabanında saklanan belirli bir ürünün satış durumunu active yapmayı amaçlıyor.",
+          "Error": null,
+          "Seconds": 0.68,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "'/a/{id}' endpointinin HTTP DELETE metoduyla çağrıldığında, belirtilen {id} değeriyle ilişkilendirilmiş kaydı silmek için kullanıldığına göre tahmin edilebilir.",
+          "Error": null,
+          "Seconds": 1.28,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "HTTP DELETE '/a/{id}' endpointi '{id}' bilgisiyle belirtildiği girişimin silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.58,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/a/{id}",
+          "Output": "HTTP DELETE '/a/{id}' end-point'sü veri silme işlemi yapar.",
+          "Error": null,
+          "Seconds": 0.4,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "HTTP DELETE '/b/{id}' methodu, belirtilen {id} parametresiyle belirlenen kaydın silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 1.03,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "HTTP DELETE '/b/{id}' end.pointsun, belirtildiğinden böyle bir {id} değeriyle bağlantıda bulunan belirli bir öğeyi sileceğini belirtir.",
+          "Error": null,
+          "Seconds": 0.83,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/b/{id}",
+          "Output": "HTTP DELETE '/b/{id}' endpointi tarafından çağrılan '{id}' kimliği ile belirtilen veriyi silmektedir.",
+          "Error": null,
+          "Seconds": 0.6,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "'/c/{id}' endpointi, belirtilen {id} değerine bağlı olarak veritabanında kaynakları silmeküretmek için çağrılır.",
+          "Error": null,
+          "Seconds": 1.08,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "HTTP DELETE '/c/{id}' endpointi, belgelenmiş verinin silinmesi işlemi yapar.",
+          "Error": null,
+          "Seconds": 0.49,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        },
+        {
+          "Method": "DELETE",
+          "Path": "/c/{id}",
+          "Output": "'/c/{id}' endpointinin HTTP DELETE metoduyla çağrılması, belirli id'nin silinmesini sağlar.",
+          "Error": null,
+          "Seconds": 0.56,
+          "Checks": {
+            "NotEmpty": true,
+            "SingleSentence": true,
+            "NoForbiddenContent": true,
+            "Turkish": true,
+            "LengthOk": true,
+            "MethodVerbConsistent": true,
+            "All": true
+          }
+        }
+      ]
+    }
+  ]
+}
