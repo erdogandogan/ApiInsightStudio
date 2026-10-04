@@ -37,6 +37,10 @@ public class AppDbContext : DbContext
 
     public DbSet<TestRunResult> TestRunResults { get; set; } = null!;
 
+    public DbSet<AiSuggestion> AiSuggestions { get; set; } = null!;
+
+    public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Proje başına en fazla bir ayar satırı
@@ -73,5 +77,19 @@ public class AppDbContext : DbContext
             .HasIndex(run => new { run.ProjectId, run.Status });
         modelBuilder.Entity<TestRun>()
             .HasIndex(run => new { run.Status, run.CreatedAt });
+
+        // Bir uç noktada aynı anda en fazla bir onay bekleyen öneri: yeni üretim eskisini Superseded yapar, yarışı veritabanı reddeder.
+        modelBuilder.Entity<AiSuggestion>()
+            .HasIndex(suggestion => suggestion.EndpointId)
+            .IsUnique()
+            .HasFilter("[Status] = 'Pending'")
+            .HasDatabaseName("UX_AiSuggestions_EndpointId_Pending");
+        modelBuilder.Entity<AiSuggestion>()
+            .HasIndex(suggestion => new { suggestion.ProjectId, suggestion.Status });
+
+        // Denetim izi: projede sıra numarası benzersiz (zincir tek ve boşluksuz kalır)
+        modelBuilder.Entity<AuditLog>()
+            .HasIndex(entry => new { entry.ProjectId, entry.Sequence })
+            .IsUnique();
     }
 }

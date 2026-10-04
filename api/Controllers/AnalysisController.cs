@@ -1,3 +1,4 @@
+using ApiInsightStudio.Api.Audit;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Extensions;
 using ApiInsightStudio.Api.Services;
@@ -14,10 +15,12 @@ public class AnalysisController : ControllerBase
 {
     private readonly AnalysisService _analysisService;
     private readonly AppDbContext _context;
+    private readonly AuditTrail _audit;
 
     /// <summary>Analiz işlemlerini yürütmek için gerekli servis ve veritabanı bağımlılıklarını alır.</summary>
-    public AnalysisController(AnalysisService analysisService, AppDbContext context)
+    public AnalysisController(AnalysisService analysisService, AppDbContext context, AuditTrail audit)
     {
+        _audit = audit;
         _analysisService = analysisService;
         _context = context;
     }
@@ -35,6 +38,10 @@ public class AnalysisController : ControllerBase
             return NotFound(new { message = "Proje bulunamadı." });
 
         var analysisResult = await _analysisService.AnalyzeProjectAsync(projectId);
+
+        await _audit.AppendAsync(projectId, userId, AuditActions.AnalysisCompleted, null,
+            $"score={analysisResult.Score}; warnings={analysisResult.Warnings.Count}");
+        await _context.SaveChangesAsync();
 
         return Ok(new
         {

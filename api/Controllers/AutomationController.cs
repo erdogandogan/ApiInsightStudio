@@ -1,3 +1,4 @@
+using ApiInsightStudio.Api.Audit;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.DTOs;
 using ApiInsightStudio.Api.Events;
@@ -24,6 +25,7 @@ public class AutomationController : ControllerBase
     private readonly IEventPublisher _events;
     private readonly OutboxDispatcher _dispatcher;
     private readonly DeliveryProcessor _deliveries;
+    private readonly AuditTrail _audit;
 
     public AutomationController(
         AppDbContext context,
@@ -32,8 +34,10 @@ public class AutomationController : ControllerBase
         IOptions<TelegramOptions> telegramOptions,
         IEventPublisher events,
         OutboxDispatcher dispatcher,
-        DeliveryProcessor deliveries)
+        DeliveryProcessor deliveries,
+        AuditTrail audit)
     {
+        _audit = audit;
         _context = context;
         _secrets = secrets;
         _notificationOptions = notificationOptions.Value;
@@ -126,6 +130,9 @@ public class AutomationController : ControllerBase
             settings.WebhookSecretProtected = _secrets.Protect(newSecret);
         }
 
+        // Denetim izine yalnızca gizli olmayan özet yazılır: adresler için yalnızca ana bilgisayar, sır/token hiç yok.
+        await _audit.AppendAsync(projectId, userId, AuditActions.SettingsUpdated, null,
+            $"enabled={Flag(settings.Enabled)}; scoreThreshold={settings.ScoreThreshold}; missingAuth={Flag(settings.NotifyOnMissingAuth)}; webhook={HostOf(settings.WebhookUrl)}; telegram={Flag(settings.NotifyTelegram)}; target={HostOf(settings.TargetBaseUrl)}; mutatingTests={Flag(settings.AllowMutatingTests)}; testFailureThreshold={settings.TestFailureThresholdPercent}");
         await _context.SaveChangesAsync();
 
         var response = ToDto(settings);
@@ -156,6 +163,7 @@ public class AutomationController : ControllerBase
             return BadRequest(new { message = "Token yalnızca boşluksuz, yazdırılabilir ASCII karakterler içermeli." });
 
         settings.TargetBearerTokenProtected = _secrets.ProtectToken(token);
+        await _audit.AppendAsync(projectId, userId, AuditActions.TargetTokenSet, null, $"target={HostOf(settings.TargetBaseUrl)}");
         await _context.SaveChangesAsync();
 
         return Ok(new { targetTokenConfigured = true });
@@ -175,6 +183,7 @@ public class AutomationController : ControllerBase
         if (settings is not null && settings.TargetBearerTokenProtected is not null)
         {
             settings.TargetBearerTokenProtected = null;
+            await _audit.AppendAsync(projectId, userId, AuditActions.TargetTokenCleared, null, $"target={HostOf(settings.TargetBaseUrl)}");
             await _context.SaveChangesAsync();
         }
 
@@ -211,6 +220,8 @@ public class AutomationController : ControllerBase
         _context.TestRuns.Add(run);
         try
         {
+            await _context.SaveChangesAsync();
+            await _audit.AppendAsync(projectId, userId, AuditActions.TestRunStarted, $"run:{run.Id}", $"target={HostOf(settings!.TargetBaseUrl)}");
             await _context.SaveChangesAsync();
         }
         catch (DbUpdateException)
@@ -308,6 +319,7 @@ public class AutomationController : ControllerBase
 
         var secret = _secrets.Generate();
         settings.WebhookSecretProtected = _secrets.Protect(secret);
+        await _audit.AppendAsync(projectId, userId, AuditActions.WebhookSecretRotated, null, $"webhook={HostOf(settings.WebhookUrl)}");
         await _context.SaveChangesAsync();
 
         return Ok(new { webhookSecret = secret });
@@ -441,6 +453,12 @@ public class AutomationController : ControllerBase
 
         return Ok(deliveries);
     }
+
+    private static string Flag(bool value) => value ? "on" : "off";
+
+    /// <summary>Denetim kaydı için adresin yalnızca ana bilgisayarı (yol, sorgu, parola, token içermez); yoksa "-".</summary>
+    private static string HostOf(string? url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Host : "-";
 
     private Task<bool> OwnsProjectAsync(int projectId, int userId) =>
         _context.Projects.AnyAsync(p => p.Id == projectId && p.UserId == userId);

@@ -7,12 +7,16 @@ public static class AlertRuleCodes
     public const string LowScore = "LOW_SCORE";
     public const string MissingAuth = "MISSING_AUTH";
     public const string TestFailures = "TEST_FAILURES";
+    public const string PendingReview = "PENDING_REVIEW";
 
     /// <summary>Analiz tamamlanınca değerlendirilen kurallar.</summary>
     public static readonly IReadOnlyCollection<string> AnalysisRules = new[] { LowScore, MissingAuth };
 
     /// <summary>Test koşusu tamamlanınca değerlendirilen kurallar.</summary>
     public static readonly IReadOnlyCollection<string> TestRunRules = new[] { TestFailures };
+
+    /// <summary>Onay bekleyen AI önerisi hatırlatması: olay değil, işçi turunda değerlendirilir.</summary>
+    public static readonly IReadOnlyCollection<string> ReviewRules = new[] { PendingReview };
 }
 
 /// <summary>Bir analizin kural değerlendirmesi için gereken özet.</summary>

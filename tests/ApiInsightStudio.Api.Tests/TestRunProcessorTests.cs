@@ -30,6 +30,7 @@ public class TestRunProcessorTests
             TestRunFixtures.CreateExecutor(context, handler, clock),
             provider.GetRequiredService<OutboxDispatcher>(),
             clock,
+            new ApiInsightStudio.Api.Audit.AuditTrail(context, clock),
             NullLogger<TestRunProcessor>.Instance);
 
         return Dispose(processor.ProcessPendingAsync(cancellationToken), context, provider);
@@ -182,6 +183,60 @@ public class TestRunProcessorTests
 
         var newRunId = TestRunFixtures.AddRun(db, projectId); // benzersiz "aktif koşu" dizini artık engel olmaz
         Assert.True(newRunId > 0);
+    }
+
+    // ----- Denetim izi -----
+
+    private static List<AuditLog> Audit(TestDb db, int projectId)
+    {
+        using var context = db.CreateContext();
+        return context.AuditLogs.Where(a => a.ProjectId == projectId).OrderBy(a => a.Sequence).ToList();
+    }
+
+    [Fact]
+    public async Task Biten_koşu_denetim_izine_sistem_eylemi_olarak_ve_sayilarla_yazilir()
+    {
+        using var db = new TestDb();
+        var projectId = await TypicalProjectWithPendingRunAsync(db, db.SeedUser());
+        var runId = TestRunFixtures.AddRun(db, projectId);
+
+        await ProcessAsync(db, new FakeTargetHandler(FakeTargetHandler.TypicalApi));
+
+        var entry = Assert.Single(Audit(db, projectId));
+        Assert.Equal("testrun.finished", entry.Action);
+        Assert.Equal($"run:{runId}", entry.Subject);
+        Assert.Null(entry.ActorUserId);   // arka plan işçisi: kullanıcı yok
+        Assert.Equal("status=Completed; passed=3; failed=0; skipped=8", entry.Details);
+    }
+
+    [Fact]
+    public async Task Basarisiz_koşu_denetim_izine_yazilir_ve_hata_ayrintisi_sizmaz()
+    {
+        using var db = new TestDb();
+        var projectId = await TypicalProjectWithPendingRunAsync(db, db.SeedUser());
+        TestRunFixtures.AddRun(db, projectId);
+
+        await ProcessAsync(db, new FakeTargetHandler(_ => throw new InvalidOperationException("içeride GIZLI-DETAY vardı")));
+
+        var entry = Assert.Single(Audit(db, projectId));
+        Assert.Equal("status=Failed", entry.Details);
+        Assert.DoesNotContain("GIZLI-DETAY", entry.Details);
+    }
+
+    [Fact]
+    public async Task Denetim_kaydi_bekleyen_koşuda_yazilmaz_ve_her_koşu_tek_kayit_birakir()
+    {
+        using var db = new TestDb();
+        var projectId = await TypicalProjectWithPendingRunAsync(db, db.SeedUser());
+        TestRunFixtures.AddRun(db, projectId, TestRun.StatusCompleted);   // zaten bitmiş: işlenmez
+
+        await ProcessAsync(db, new FakeTargetHandler(FakeTargetHandler.TypicalApi));
+        Assert.Empty(Audit(db, projectId));
+
+        TestRunFixtures.AddRun(db, projectId);
+        await ProcessAsync(db, new FakeTargetHandler(FakeTargetHandler.TypicalApi));
+        await ProcessAsync(db, new FakeTargetHandler(FakeTargetHandler.TypicalApi));   // kuyruk boş: yeni kayıt yok
+        Assert.Single(Audit(db, projectId));
     }
 
     // ----- Hata yalıtımı -----

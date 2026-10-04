@@ -174,6 +174,13 @@ public class TelegramApiTests : IClassFixture<TelegramApiFactory>
         {
             _factory.ReplyStatus = HttpStatusCode.OK;
             _factory.ReplyBody = "{\"ok\":true,\"result\":{\"message_id\":1}}";
+
+            // Geri çekilmedeki teslimat 10 sn sonra vadesi gelip yavaş/yüklü bir çalıştırmada sonraki testin
+            // "tam bir istek gitti" sayımına karışmasın diye bu testin artığı temizlenir.
+            using var scope = _factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            db.NotificationDeliveries.RemoveRange(db.NotificationDeliveries.Where(d => d.ProjectId == projectId));
+            await db.SaveChangesAsync();
         }
     }
 

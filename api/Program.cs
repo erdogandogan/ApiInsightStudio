@@ -1,4 +1,5 @@
 using System.Text;
+using ApiInsightStudio.Api.Audit;
 using ApiInsightStudio.Api.Automation;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Events;
@@ -49,6 +50,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 builder.Services.AddControllers();
 builder.Services.AddScoped<AlertRuleEvaluator>();
+builder.Services.AddScoped<AuditTrail>();
+builder.Services.AddScoped<ReviewReminderService>();
 builder.Services.AddScoped<IEventPublisher, OutboxEventPublisher>();
 builder.Services.AddScoped<IEventHandler<AnalysisCompleted>, AnalysisCompletedHandler>();
 builder.Services.AddScoped<OutboxDispatcher>();

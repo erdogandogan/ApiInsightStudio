@@ -89,6 +89,29 @@ public class TestRunnerApiTests : IClassFixture<RunnerApiFactory>
             Assert.Equal(HttpStatusCode.OK, (await owner.DeleteAsync($"/api/project/{projectId}")).StatusCode);
     }
 
+    [Fact]
+    public async Task Kosu_baslatma_ve_bitis_denetim_izine_yazilir_yalnizca_ana_bilgisayarla()
+    {
+        var owner = await _factory.CreateAuthenticatedClientAsync("runner-audit@example.com");
+        var projectId = await UploadAsync(owner);
+        await PutSettingsAsync(owner, projectId, $"{Target}/gizli-yol");
+        var run = await RunToCompletionAsync(owner, projectId);
+        var runId = run.GetProperty("id").GetInt32();
+
+        var page = await owner.GetFromJsonAsync<JsonElement>($"/api/automation/{projectId}/audit?action=testrun&take=100");
+        var items = page.GetProperty("items").EnumerateArray().Reverse().ToList();
+
+        Assert.Equal(new[] { "testrun.started", "testrun.finished" }, items.Select(i => i.GetProperty("action").GetString()));
+        Assert.All(items, i => Assert.Equal($"run:{runId}", i.GetProperty("subject").GetString()));
+        Assert.Equal("target=8.8.8.8", items[0].GetProperty("details").GetString());
+        Assert.NotEqual(System.Text.Json.JsonValueKind.Null, items[0].GetProperty("actorUserId").ValueKind);   // kullanıcı başlattı
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, items[1].GetProperty("actorUserId").ValueKind);     // işçi bitirdi
+        Assert.DoesNotContain("gizli-yol", page.ToString());
+
+        var verify = await owner.GetFromJsonAsync<JsonElement>($"/api/automation/{projectId}/audit/verify");
+        Assert.True(verify.GetProperty("valid").GetBoolean());
+    }
+
     private async Task<JsonElement> RunToCompletionAsync(HttpClient owner, int projectId)
     {
         var start = await owner.PostAsync($"/api/automation/{projectId}/test-runs", null);
