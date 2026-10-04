@@ -132,7 +132,7 @@ dotnet run --project eval/AiEval -c Release -- --models qwen2.5:7b,qwen2.5:3b --
 ### Web
 ```bash
 cd web
-cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:5037/api
+echo "NEXT_PUBLIC_API_URL=http://localhost:5037/api" > .env.local
 npm install
 npm run dev                  # http://localhost:3000
 ```
