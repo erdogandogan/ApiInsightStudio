@@ -1,0 +1,46 @@
+{
+  "id": "delete-id-korumali",
+  "description": "DELETE /items/{id}, korumalı: yalnızca BOLA riski",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "delete-id-korumali",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/{id}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            },
+            "401": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 85,
+    "findings": [
+      "DELETE /items/{id} BOLA_DELETE_ID"
+    ]
+  }
+}

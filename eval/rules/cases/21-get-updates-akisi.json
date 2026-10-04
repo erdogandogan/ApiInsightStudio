@@ -1,0 +1,46 @@
+{
+  "id": "get-updates-akisi",
+  "description": "GET /updates: sürüm güncellemeleri listesi, kalıcı işlem değil",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "get-updates-akisi",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/updates": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 90,
+    "findings": [
+      "GET /updates GET_MUTATES"
+    ]
+  },
+  "ideal": {
+    "score": 100,
+    "findings": [],
+    "note": "Yol alt dizgisi eşleşmesi 'updates' gibi masum adları da işaretler (yanlış pozitif)."
+  }
+}

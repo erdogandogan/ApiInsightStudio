@@ -1,0 +1,39 @@
+{
+  "id": "sadece-description",
+  "description": "summary yok ama description var: açıklama sayılır",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "sadece-description",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "description": "Ürünleri listeler"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  }
+}

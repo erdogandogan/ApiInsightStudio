@@ -1,0 +1,51 @@
+{
+  "id": "delete-itemid",
+  "description": "DELETE /items/{itemId}: kural yalnızca birebir {id} yakalar",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "delete-itemid",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items/{itemId}": {
+        "delete": {
+          "responses": {
+            "204": {
+              "description": "d"
+            },
+            "401": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  },
+  "ideal": {
+    "score": 85,
+    "findings": [
+      "DELETE /items/{itemId} BOLA_DELETE_ID"
+    ],
+    "note": "Kural yalnızca '{id}' adlı parametreyi tanır; '{itemId}' gibi adlar kaçar (yanlış negatif)."
+  }
+}

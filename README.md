@@ -1,9 +1,116 @@
 # ApiInsightStudio
 
-OpenAPI/Swagger dokümanı yükleyip kalite ve güvenlik skoru, uyarılar ve otomatik test senaryoları üreten bir araç.
+OpenAPI/Swagger dokümanı yükleyip kalite ve güvenlik skoru, uyarılar ve otomatik test senaryoları üreten; sonucu **kaynağa dayalı, insan denetimli bir otomasyon akışına** bağlayan bir araç: kural motoru skoru hesaplar, uyarılar imzalı bildirimle (webhook/Telegram) gider, test senaryoları hedef API'ye karşı güvenle çalıştırılır, yerel bir yapay zekâ modeli yalnızca **taslak** açıklama yazar ve bu taslak bir insan onaylamadan yayımlanmaz. Her adım değişmezlik zinciriyle denetim izine yazılır.
 
-- `api/` — ASP.NET Core 8 Web API (EF Core, SQL Server, JWT)
-- `web/` — Next.js frontend (isteğe bağlı Electron masaüstü sürümü)
+- `api/`: ASP.NET Core 8 Web API (EF Core, SQL Server, JWT)
+- `web/`: Next.js frontend (isteğe bağlı Electron masaüstü sürümü)
+- `eval/`: ölçüm: kural motoru örnekleri ve AI biçim değerlendirmesi (sonuçlar `eval/results/`)
+- `tests/`: xUnit testleri (747 test) · `docs/demo.md`: 60 saniyelik demo senaryosu
+
+## Problem ve yaklaşım
+
+API dokümanlarının kalitesi (eksik açıklama, tanımsız hata kodları, kimlik doğrulamasız kritik uç noktalar) elle gözden geçirmeyle kaçar. Bu proje üç ilkeye dayanır:
+
+1. **Skor deterministik olmalı.** Skor kural motorundan gelir, yapay zekâdan değil; aynı doküman her seferinde aynı skoru alır ve her puan kesintisi bir uyarıya karşılık gelir.
+2. **Yapay zekâ karar vermez, taslak yazar.** AI çıktısı onay bekleyen bir öneridir (model ve komut sürümüyle kayıtlı); yalnızca bir insan onaylarsa yayımlanır ve kalite skorunu hiçbir zaman değiştirmez. Ölçümler (aşağıda) bunun neden gerekli olduğunu gösterir: küçük yerel modeller zaman zaman cümlenin ortasında Çince/Korece'ye kayıyor.
+3. **Her şey izlenebilir ve güvenli olmalı.** Dışarı giden istekler SSRF'e karşı korunur, bildirimler imzalanır, her eylem hash zincirli denetim izine yazılır, gizli bilgi hiçbir kayda girmez.
+
+## Mimari
+
+```mermaid
+flowchart LR
+    U([Kullanıcı]) --> W[Web<br/>Next.js]
+    W -->|JWT| A[API<br/>ASP.NET Core 8]
+    A --> DB[(SQL Server)]
+    A -->|OpenAI uyumlu<br/>/v1/chat/completions| AI[Yerel model<br/>Ollama]
+    A -.->|outbox olayları| WK[Arka plan işçileri<br/>AutomationWorker · TestRunWorker]
+    WK -->|HMAC imzalı POST| WH[Webhook alıcısı]
+    WK -->|Bot API| TG[Telegram]
+    WK -->|SSRF korumalı,<br/>yönlendirmesiz istek| T[Hedef API<br/>test koşusu]
+```
+
+## Otomasyon akışı
+
+```mermaid
+sequenceDiagram
+    participant K as Kullanıcı
+    participant A as API
+    participant O as Outbox / işçiler
+    participant N as Webhook · Telegram
+    participant M as Yerel model
+    K->>A: OpenAPI yükle
+    A->>A: Kural motoru: skor + uyarılar (+ denetim kaydı)
+    A->>O: AnalysisCompleted (aynı işlemde)
+    O->>O: Kural eşiği? Kenar tetiklemeli uyarı (tekrar yok)
+    O->>N: Yeni uyarı → imzalı bildirim (10/20/40/80 sn geri çekilme)
+    K->>A: AI ile açıklama üret
+    A->>M: Komut (sürümlü)
+    M-->>A: Taslak metin
+    A->>A: AiSuggestion = Pending (model + komut sürümü kayıtlı)
+    K->>A: Onayla / düzenleyip onayla / reddet
+    A->>A: Yalnızca onayda Endpoint.AiSummary yazılır (atomik, 409 korumalı)
+    O->>N: 24 saat onaysız kalırsa PENDING_REVIEW hatırlatması
+    K->>A: Denetim izini doğrula (hash zinciri)
+```
+
+## Güvenlik kararları
+
+| Konu | Karar |
+|---|---|
+| Sahiplik (BOLA/IDOR) | Her uç nokta kaydı kullanıcının kendi projesiyle sınırlar; başkasının projesi "bulunamadı" (404) döner, varlığı sızdırılmaz. Ayrı testlerle doğrulanır |
+| Kimlik | BCrypt parola özeti, JWT; anahtar repoda tutulmaz (`dotnet user-secrets`) |
+| SSRF | Webhook ve test hedefi adresleri kayıt anında ve **bağlantı anında, bağlanılan IP üzerinde** denetlenir (DNS rebinding'e karşı); özel/loopback/link-local/bulut metadata adresleri engelli, yönlendirme ve proxy yok |
+| Webhook imzası | `X-Signature: sha256=HMAC(sır, "{zaman}.{gövde}")`, `X-Event-Id` ile tekrar ayıklama, zaman damgasıyla tekrar saldırısı koruması. Sır sunucuda üretilir, bir kez gösterilir, şifreli saklanır |
+| Gizli bilgi | Webhook sırrı ve hedef token'ı Data Protection ile (ayrı amaç dizeleriyle) şifreli; Telegram token'ı adreste geçtiği için istemci günlükleri kapalı; hata metinleri, kayıtlar ve denetim izi hiçbirini taşımaz (adreslerde yalnızca ana bilgisayar adı) |
+| Test koşucusu | Varsayılan yalnızca GET; açılsa bile mutating metotlarda yalnızca olumsuz senaryolar ve boş `{}` gövde; yanıt gövdeleri saklanmaz; zaman aşımı, istek sayısı ve eşzamanlılık sınırları, devre kesici |
+| İnsan onayı | AI çıktısı yayımlanmadan önce onay gerekir; onay tek koşullu UPDATE ile atomiktir, ikinci onay/ret 409 alır |
+| Denetim izi | Ekleme-yalnız, SHA-256 hash zinciri, doğrulama uç noktası. Değiştirme/silme/araya ekleme yakalanır (sınırları aşağıda) |
+
+## Değerlendirme (ölçülen sayılar)
+
+Aşağıdaki tüm sayılar `eval/results/` içindeki dosyalardan gelir ve komutlarla yeniden üretilir. Bu bölümde yalnızca gerçekten çalıştırılmış ölçümler yer alır.
+
+### 1. Kural motoru: 29 örnek
+
+Her örnek gerçek yükleme + analiz hattından geçer (ayrıştırma, kurallar, skor). Beklenen sonuçlar **kod çalıştırılmadan, kural tanımlarına bakılarak elle hesaplanmıştır**. Ayrıca bazı örneklerde gerçek dünyada olması gereken (ideal) sonuç ayrıca kayıtlıdır; ikisi bilerek ayrıdır.
+
+| Ölçüt | Sonuç |
+|---|---|
+| Kural tanımına uyum (elle hesaplanan skor + bulgular) | **29/29** |
+| Gerçek dünya uyumu (ideal sonuçla birebir) | **23/29** |
+| Bulgu kesinliği (ideal sonuca göre) | **%91,4** (32 doğru, 3 yanlış pozitif) |
+| Bulgu duyarlılığı (ideal sonuca göre) | **%91,4** (3 kaçan bulgu) |
+
+Ölçümün gösterdiği, kuralların bilinen zayıflıkları (ayrıntı: `eval/results/rule-engine.md`):
+
+- **Yanlış pozitif:** `GET /updates` gibi masum yollar "update" alt dizgisinden işaretlenir; bilerek herkese açık `POST /auth/login` "kimlik eksik" sayılır; yalnızca `422` tanımlı olan uç nokta "hata kodu yok" sayılır.
+- **Yanlış negatif:** BOLA kuralı yalnızca birebir `{id}` adlı parametreyi tanır (`{itemId}` kaçar); `PATCH` kritik metot sayılmaz; `GET .../activate` gibi `delete/remove/update` dışı fiiller kaçar.
+
+```bash
+EVAL_WRITE_REPORT=1 dotnet test --filter Category=Eval    # eval/results/rule-engine.md yeniden üretilir
+```
+
+### 2. AI açıklaması: biçim doğruluğu (qwen2.5:7b ve qwen2.5:3b)
+
+18 benzersiz endpoint × 3 tekrar = model başına 54 örnek, aynı komut. Donanım: Intel Core i5-10300H, 16 GB RAM, NVIDIA GTX 1650 Ti (4 GB), Windows 11, Ollama 0.35.1. Süreler model belleğe yüklendikten sonraki istek başına duvar saatidir.
+
+| Model | Tüm ölçütleri geçen | Tek cümle | Türkçe (Latin dışı yazı yok) | Yöntemle tutarlı eylem | Ort. süre | En yavaş |
+|---|---|---|---|---|---|---|
+| qwen2.5:7b | %74 (40/54) | %96 | %98 | %76 | 4,1 sn | 7,1 sn |
+| qwen2.5:3b | %80 (43/54) | %96 | %96 | %81 | 0,6 sn | 1,3 sn |
+
+Nasıl okunmalı:
+
+- **Bu bir biçim ölçümüdür, anlam doğruluğu değil.** "Yöntemle tutarlı eylem", metoda uygun bir fiilin geçip geçmediğine bakan kaba bir vekil ölçüttür.
+- **54 örnekte iki model arasındaki fark istatistiksel olarak anlamlı değildir**; ama 7b'nin 3b'den belirgin biçimde iyi olmadığı, 6-7 kat yavaş olduğu açıktır. Bu görev için (tek cümlelik açıklama taslağı) küçük model makul bir seçimdir.
+- **Gerçek bir bulgu:** iki model de zaman zaman cümlenin ortasında Çince/Korece'ye kayıyor (örn. `...Bu endpoint, belirli birgetItemId的商品项进行删除。`). Bu yüzden çıktı otomatik yayımlanmaz ve onay adımı vardır.
+- **Ölçütlerin düzeltilmesi:** İlk ölçümde (18 örnek, tekrarsız) "süslü parantez yasak" ölçütü, modelin yol parametresini (`{id}`) cümlede aynen yazmasını da ihlal sayıyordu (haksız) ve dil ölçütü Çince'ye kaymayı yakalamıyordu. İkisi düzeltilip testlerle (`FormatChecksTests`) sabitlendi ve ölçüm yeniden alındı; tabloda yalnızca yeniden alınan ölçüm vardır.
+- Süreler tek makinede, tek çalıştırmadan alınmıştır (ilk ölçümde 7b için 6,0 sn, 3b için 1,0 sn ortalama görüldü: sistem yüküne bağlı oynama payı vardır). Modelin diskten ilk yüklenmesi birkaç dakika sürebilir ve tabloya dahil değildir.
+
+```bash
+ollama pull qwen2.5:7b && ollama pull qwen2.5:3b
+dotnet run --project eval/AiEval -c Release -- --models qwen2.5:7b,qwen2.5:3b --repeat 3 --hardware "<donanımınız>"
+```
 
 ## Kurulum
 
@@ -25,7 +132,7 @@ OpenAPI/Swagger dokümanı yükleyip kalite ve güvenlik skoru, uyarılar ve oto
 ### Web
 ```bash
 cd web
-cp .env.example .env.local   # NEXT_PUBLIC_API_URL=http://localhost:5037/api
+echo "NEXT_PUBLIC_API_URL=http://localhost:5037/api" > .env.local
 npm install
 npm run dev                  # http://localhost:3000
 ```
@@ -133,3 +240,13 @@ AI çıktısı bir insan onaylayana kadar hiçbir yere yazılmaz. `POST /api/pro
 - **Tek sahipli model:** Öneriyi üreten de onaylayan da aynı kullanıcıdır; bu "dört göz ilkesi" değil, **insan onayının kaydıdır**. Onaylayan kullanıcı kimliği kayıtlıdır, ileride rol ayrımı eklenirse hazırdır.
 - **Hatırlatma:** 24 saatten uzun süredir onay bekleyen öneri varsa `PENDING_REVIEW` uyarısı açılır ve webhook/Telegram bildirimi gider (kenar tetiklemeli: bekleyen öneri sürdükçe tekrar bildirim yok; hepsi incelenince uyarı çözülür). Zamana bağlı olduğu için olay yerine arka plan işçisinin her turunda değerlendirilir.
 - **Web:** Rapor sayfasında "AI Önerileri" bölümü (onayla / düzenleyip onayla / reddet) ve "Denetim İzi" sayfası (süzgeç, "Zinciri doğrula").
+
+## Bilinen sınırlar
+
+- **Kural motoru:** Yukarıdaki değerlendirmedeki yanlış pozitif/negatifler (yol alt dizgisi eşleşmesi, yalnızca `{id}` adlı parametre, `PATCH`, herkese açık amaçlı uç noktalar, `422`). Boş bir doküman 100 skor alır.
+- **AI açıklaması:** Yalnızca metot ve yoldan üretilir (dokümandaki şemaları görmez); küçük modeller dil kayması ve uydurma sözcük üretebilir. Biçim ölçülür, anlam doğruluğu ölçülmez; bu yüzden insan onayı şarttır.
+- **Denetim izi:** Hash zinciri değiştirme, silme, araya ekleme ve yer değiştirmeyi yakalar. Veritabanına tam yetkisi olan biri zinciri baştan hesaplayabilir ve en sondaki kayıtların silinmesi tek başına anlaşılamaz (doğrulama son özeti döndürür; dışarıda saklanırsa fark edilir). Denetim kayıtları projeyle birlikte silinir.
+- **Tek sahipli model:** Öneriyi üreten de onaylayan da aynı kullanıcıdır; bu "dört göz ilkesi" değil, insan onayının kaydıdır.
+- **Tek sunucu varsayımı:** Olay ve teslimat işleme süreç içi kilitle serileştirilir; birden fazla sunucuya ölçeklenirse veritabanı düzeyinde kilit gerekir.
+- **Test koşucusu:** Üretilen senaryolar basit şablonlardır; geçerli gövde/id gerektiren başarılı akışlar test edilmez, sorgu parametresi zorunlu GET'ler parametresiz çağrılır.
+- **Web:** Otomatik test altyapısı yok; arayüz tip denetimi, derleme ve elle tarayıcı denemesiyle doğrulandı.

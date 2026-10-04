@@ -1,0 +1,39 @@
+{
+  "id": "temiz-get",
+  "description": "Açıklamalı, hata kodlu GET: hiç bulgu olmamalı",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "temiz-get",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 100,
+    "findings": []
+  }
+}

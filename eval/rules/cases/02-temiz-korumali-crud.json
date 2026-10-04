@@ -1,0 +1,68 @@
+{
+  "id": "temiz-korumali-crud",
+  "description": "Genel güvenlik tanımlı, düzgün CRUD",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "temiz-korumali-crud",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        },
+        "post": {
+          "responses": {
+            "201": {
+              "description": "d"
+            },
+            "400": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      },
+      "/items/{itemId}": {
+        "put": {
+          "responses": {
+            "200": {
+              "description": "d"
+            },
+            "404": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    },
+    "security": [
+      {
+        "bearerAuth": []
+      }
+    ]
+  },
+  "expect": {
+    "endpointCount": 3,
+    "score": 100,
+    "findings": []
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "id": "hata-kodu-eksik",
+  "description": "Yalnızca 200 tanımlı",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "hata-kodu-eksik",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "get": {
+          "responses": {
+            "200": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var"
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 85,
+    "findings": [
+      "GET /items NO_ERROR_CODES"
+    ]
+  }
+}

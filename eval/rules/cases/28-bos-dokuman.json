@@ -1,0 +1,25 @@
+{
+  "id": "bos-dokuman",
+  "description": "Hiç endpoint yok",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "bos-dokuman",
+      "version": "1.0.0"
+    },
+    "paths": {},
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 0,
+    "score": 100,
+    "findings": []
+  }
+}

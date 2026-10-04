@@ -1,0 +1,51 @@
+{
+  "id": "sadece-422",
+  "description": "Hata kodu olarak yalnızca 422",
+  "document": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "sadece-422",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/items": {
+        "post": {
+          "responses": {
+            "201": {
+              "description": "d"
+            },
+            "422": {
+              "description": "d"
+            }
+          },
+          "summary": "Açıklama var",
+          "security": [
+            {
+              "bearerAuth": []
+            }
+          ]
+        }
+      }
+    },
+    "components": {
+      "securitySchemes": {
+        "bearerAuth": {
+          "type": "http",
+          "scheme": "bearer"
+        }
+      }
+    }
+  },
+  "expect": {
+    "endpointCount": 1,
+    "score": 85,
+    "findings": [
+      "POST /items NO_ERROR_CODES"
+    ]
+  },
+  "ideal": {
+    "score": 100,
+    "findings": [],
+    "note": "Yalnızca 400/401/404 hata kodu sayılır; 422 tanımlı olsa da eksik görünür (yanlış pozitif)."
+  }
+}
