@@ -33,6 +33,10 @@ public class AppDbContext : DbContext
 
     public DbSet<NotificationDelivery> NotificationDeliveries { get; set; } = null!;
 
+    public DbSet<TestRun> TestRuns { get; set; } = null!;
+
+    public DbSet<TestRunResult> TestRunResults { get; set; } = null!;
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         // Proje başına en fazla bir ayar satırı
@@ -56,5 +60,18 @@ public class AppDbContext : DbContext
         // Zamanı gelmiş teslimatları hızlı bulmak için
         modelBuilder.Entity<NotificationDelivery>()
             .HasIndex(delivery => new { delivery.Status, delivery.NextAttemptAt });
+
+        // Bir projede aynı anda en fazla bir aktif (Pending/Running) koşu: iki eşzamanlı istek yarışsa bile veritabanı reddeder.
+        modelBuilder.Entity<TestRun>()
+            .HasIndex(run => run.ProjectId)
+            .IsUnique()
+            .HasFilter("[Status] IN ('Pending', 'Running')")
+            .HasDatabaseName("UX_TestRuns_ProjectId_Active");
+
+        // Bir projenin koşularını hızlı bulmak için
+        modelBuilder.Entity<TestRun>()
+            .HasIndex(run => new { run.ProjectId, run.Status });
+        modelBuilder.Entity<TestRun>()
+            .HasIndex(run => new { run.Status, run.CreatedAt });
     }
 }
