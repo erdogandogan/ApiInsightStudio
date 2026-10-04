@@ -1,6 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text.Json;
+using ApiInsightStudio.Api.Audit;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.DTOs;
 using ApiInsightStudio.Api.Extensions;
@@ -25,11 +26,13 @@ public class ProjectController : ControllerBase
     private readonly AnalysisService _analysisService;
     private readonly TestGenerationService _testGenerationService;
     private readonly AiService _aiService;
+    private readonly AuditTrail _audit;
 
     public ProjectController(AppDbContext context, IConfiguration configuration,
         AnalysisService analysisService, TestGenerationService testGenerationService,
-        AiService aiService)
+        AiService aiService, AuditTrail audit)
     {
+        _audit = audit;
         _context = context;
         _configuration = configuration;
         _analysisService = analysisService;
@@ -162,8 +165,12 @@ public class ProjectController : ControllerBase
 
         await _context.SaveChangesAsync();
 
-        await _analysisService.AnalyzeProjectAsync(project.Id);
+        var analysis = await _analysisService.AnalyzeProjectAsync(project.Id);
         await _testGenerationService.GenerateTestsForProjectAsync(project.Id);
+
+        await _audit.AppendAsync(project.Id, userId, AuditActions.ProjectUploaded, null,
+            $"endpoints={endpointCount}; responses={responseCount}; score={analysis.Score}");
+        await _context.SaveChangesAsync();
 
         return Ok(new
         {
@@ -296,11 +303,66 @@ public class ProjectController : ControllerBase
             return StatusCode(502, new { message = $"AI servisi şu an kullanılamıyor: {ex.Message}" });
         }
 
-        // AI çıktısı yalnızca AiSummary'ye yazılır: Summary, skor ve uyarılar OpenAPI dokümanını yansıtmaya devam eder.
-        endpoint.AiSummary = description;
-        await _context.SaveChangesAsync();
+        // AI çıktısı doğrudan yayımlanmaz: onay bekleyen bir taslak (AiSuggestion) olur. Yalnızca bir insan onaylarsa
+        // AiSummary'ye yazılır (bkz. AiReviewController); Summary, skor ve uyarılar OpenAPI dokümanını yansıtmaya devam eder.
+        if (description.Length > AiSuggestion.MaxContentLength)
+            description = description[..AiSuggestion.MaxContentLength];
 
-        return Ok(new { message = "AI açıklaması başarıyla oluşturuldu.", description });
+        AiSuggestion suggestion;
+        await using (var transaction = await _context.Database.BeginTransactionAsync())
+        {
+            // Bu uç nokta için önceki bekleyen öneri yenisiyle değiştirilir (eski kayıt silinmez, Superseded olur).
+            var previous = await _context.AiSuggestions
+                .Where(s => s.EndpointId == endpointId && s.Status == AiSuggestion.StatusPending)
+                .ToListAsync();
+            foreach (var old in previous)
+            {
+                old.Status = AiSuggestion.StatusSuperseded;
+                await _audit.AppendAsync(projectId, userId, AuditActions.SuggestionSuperseded, $"suggestion:{old.Id}",
+                    $"endpoint={old.Method} {old.Path}");
+            }
+
+            if (previous.Count > 0)
+                await _context.SaveChangesAsync();
+
+            suggestion = new AiSuggestion
+            {
+                ProjectId = projectId,
+                EndpointId = endpointId,
+                Method = endpoint.Method,
+                Path = endpoint.Path,
+                Content = description,
+                Model = _aiService.Model,
+                PromptVersion = AiService.PromptVersion,
+                Status = AiSuggestion.StatusPending,
+                CreatedAt = DateTime.UtcNow,
+                CreatedByUserId = userId
+            };
+            _context.AiSuggestions.Add(suggestion);
+
+            try
+            {
+                await _context.SaveChangesAsync();
+                await _audit.AppendAsync(projectId, userId, AuditActions.SuggestionCreated, $"suggestion:{suggestion.Id}",
+                    $"endpoint={endpoint.Method} {endpoint.Path}; model={suggestion.Model}; prompt={suggestion.PromptVersion}");
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+            }
+            catch (DbUpdateException)
+            {
+                // İki eşzamanlı üretim yarıştı: benzersiz "tek bekleyen öneri" dizini ikincisini reddetti
+                return Conflict(new { message = "Bu uç nokta için aynı anda başka bir öneri üretildi; lütfen listeyi yenileyin." });
+            }
+        }
+
+        // "description" alanı eski istemcilerle uyum için kalır; artık yayımlanmış açıklama değil, onay bekleyen taslaktır.
+        return Ok(new
+        {
+            message = "AI önerisi oluşturuldu ve onayınızı bekliyor.",
+            description,
+            suggestionId = suggestion.Id,
+            status = suggestion.Status
+        });
     }
 
     [HttpDelete("{projectId}")]

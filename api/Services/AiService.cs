@@ -16,6 +16,9 @@ public class AiService
         _options = options.Value;
     }
 
+    /// <summary>Kullanılan komutun (prompt) sürümü; komut değişince artırılır ve her öneriyle birlikte kaydedilir.</summary>
+    public const string PromptVersion = "describe-endpoint/v1";
+
     /// <summary>Yapılandırılmış sağlayıcı adresi (hata mesajlarında kullanılır).</summary>
     public string BaseUrl => _options.BaseUrl;
 

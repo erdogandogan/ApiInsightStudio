@@ -1,3 +1,4 @@
+using ApiInsightStudio.Api.Audit;
 using ApiInsightStudio.Api.Data;
 using ApiInsightStudio.Api.Events;
 using ApiInsightStudio.Api.Models;
@@ -25,6 +26,7 @@ public class TestRunProcessor
     private readonly TestRunExecutor _executor;
     private readonly OutboxDispatcher _dispatcher;
     private readonly TimeProvider _time;
+    private readonly AuditTrail _audit;
     private readonly ILogger<TestRunProcessor> _logger;
 
     public TestRunProcessor(
@@ -32,8 +34,10 @@ public class TestRunProcessor
         TestRunExecutor executor,
         OutboxDispatcher dispatcher,
         TimeProvider time,
+        AuditTrail audit,
         ILogger<TestRunProcessor> logger)
     {
+        _audit = audit;
         _dbContext = dbContext;
         _executor = executor;
         _dispatcher = dispatcher;
@@ -95,6 +99,7 @@ public class TestRunProcessor
                         .SetProperty(r => r.Error, error), CancellationToken.None);
             }
 
+            await RecordFinishedAsync(projectId, runId, cancellationToken);
             await TrimOldRunsAsync(projectId, cancellationToken);
 
             // TestRunCompleted → uyarı → teslimat zinciri hemen işlensin
@@ -113,6 +118,29 @@ public class TestRunProcessor
         finally
         {
             Gate.Release();
+        }
+    }
+
+    /// <summary>Biten (Completed/Failed) koşuyu denetim izine yazar; sistem eylemidir (kullanıcı yok). Hata koşuyu etkilemez.</summary>
+    private async Task RecordFinishedAsync(int projectId, int runId, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _dbContext.ChangeTracker.Clear();
+            var run = await _dbContext.TestRuns.AsNoTracking().FirstOrDefaultAsync(r => r.Id == runId, cancellationToken);
+            if (run is null)
+                return;
+
+            var details = run.Status == TestRun.StatusCompleted
+                ? $"status=Completed; passed={run.Passed}; failed={run.Failed}; skipped={run.Skipped}"
+                : "status=Failed";
+            await _audit.AppendAsync(projectId, null, AuditActions.TestRunFinished, $"run:{runId}", details, cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _dbContext.ChangeTracker.Clear();
+            _logger.LogError("Test koşusu {RunId} denetim izine yazılamadı: {ExceptionType}.", runId, ex.GetType().Name);
         }
     }
 

@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Cookies from 'js-cookie'
 import apiClient from '@/lib/api'
+import { AiSuggestionDto, errorMessage, httpStatus } from '@/lib/aiReview'
+import AiSuggestionsPanel from './AiSuggestionsPanel'
 
 interface WarningDto {
   message: string
@@ -112,19 +114,11 @@ export default function ReportContent() {
   const [error, setError] = useState<string | null>(null)
   const [loadingEndpointId, setLoadingEndpointId] = useState<number | null>(null)
   const [aiError, setAiError] = useState<string | null>(null)
+  const [aiNotice, setAiNotice] = useState<string | null>(null)
+  const [suggestions, setSuggestions] = useState<AiSuggestionDto[]>([])
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null)
 
   interface AiEntry { description: string; method: string; path: string }
-  const [generatedDescriptions, setGeneratedDescriptions] = useState<Record<number, AiEntry>>({})
-
-  const storageKey = id ? `ai_desc_project_${id}` : null
-
-  useEffect(() => {
-    if (!storageKey) return
-    try {
-      const stored = localStorage.getItem(storageKey)
-      if (stored) setGeneratedDescriptions(JSON.parse(stored))
-    } catch {}
-  }, [storageKey])
 
   const fetchReport = useCallback(() => {
     if (!id) { setError('Geçersiz proje ID.'); setLoading(false); return }
@@ -143,6 +137,26 @@ export default function ReportContent() {
   }, [id, router])
 
   useEffect(() => { fetchReport() }, [fetchReport])
+
+  // AI önerileri sunucuda tutulur (tek kaynak): taslaklar, onaylar ve ret kayıtları
+  const fetchSuggestions = useCallback(() => {
+    if (!id) return
+    apiClient
+      .get<AiSuggestionDto[]>(`/automation/${id}/ai-suggestions`)
+      .then(({ data }) => { setSuggestions(data); setSuggestionsError(null) })
+      .catch((err: unknown) => {
+        if (httpStatus(err) === 401) { router.push('/login'); return }
+        setSuggestionsError(errorMessage(err, 'AI önerileri yüklenemedi.'))
+      })
+  }, [id, router])
+
+  useEffect(() => { fetchSuggestions() }, [fetchSuggestions])
+
+  // Onay/ret sonrası hem öneri listesi hem yayımlanmış açıklamalar (rapor) yenilenir
+  const handleReviewChanged = useCallback(() => {
+    fetchSuggestions()
+    fetchReport()
+  }, [fetchSuggestions, fetchReport])
 
   function handleLogout() {
     Cookies.remove('token')
@@ -165,21 +179,15 @@ export default function ReportContent() {
   async function handleGenerateAiDescription(endpointId: number, method: string, path: string) {
     setLoadingEndpointId(endpointId)
     setAiError(null)
+    setAiNotice(null)
     try {
-      const { data } = await apiClient.post<{ description: string }>(`/project/${id}/endpoint/${endpointId}/generate-ai-description`)
-      if (data.description) {
-        setGeneratedDescriptions(prev => {
-          const next = { ...prev, [endpointId]: { description: data.description, method, path } }
-          if (storageKey) {
-            try { localStorage.setItem(storageKey, JSON.stringify(next)) } catch {}
-          }
-          return next
-        })
-      }
-      fetchReport()
+      // Sunucu cevabı artık yayımlanmış açıklama değil, onay bekleyen bir öneridir
+      await apiClient.post(`/project/${id}/endpoint/${endpointId}/generate-ai-description`)
+      setAiNotice(`${method} ${path} için AI önerisi oluşturuldu; aşağıdaki "AI Önerileri" bölümünden onayınızı bekliyor.`.trim())
+      fetchSuggestions()
     } catch (err: unknown) {
-      const errObj = err as { response?: { data?: { message?: string } }; message?: string }
-      setAiError(errObj.response?.data?.message ?? errObj.message ?? 'AI açıklaması oluşturulamadı.')
+      const errObj = err as { message?: string }
+      setAiError(errorMessage(err, errObj.message ?? 'AI açıklaması oluşturulamadı.'))
     } finally {
       setLoadingEndpointId(null)
     }
@@ -188,8 +196,8 @@ export default function ReportContent() {
   const securityWarnings = report?.warnings.filter(w => w.type === 'Security') ?? []
   const qualityWarnings  = report?.warnings.filter(w => w.type === 'Quality') ?? []
 
-  // Sunucuda kayıtlı AI açıklamaları esas alınır; tarayıcı deposundakiler yalnızca yedektir.
-  const aiDescriptions: Record<number, AiEntry> = { ...generatedDescriptions }
+  // Yalnızca insanın onayladığı AI açıklamaları yayımlanmış sayılır (sunucuda Endpoint.AiSummary).
+  const aiDescriptions: Record<number, AiEntry> = {}
   for (const w of report?.warnings ?? []) {
     if (w.endpointId !== undefined && w.endpointAiSummary) {
       aiDescriptions[w.endpointId] = {
@@ -230,6 +238,13 @@ export default function ReportContent() {
           </div>
 
           <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={() => router.push(`/dashboard/audit/?id=${encodeURIComponent(id)}`)}
+              disabled={!id}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-gray-100 text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              Denetim İzi
+            </button>
             <button
               onClick={handleDownloadReport}
               disabled={!report}
@@ -391,6 +406,17 @@ export default function ReportContent() {
                   </div>
                 )}
 
+                {aiNotice && (
+                  <div role="status" className="flex items-start gap-2 mb-3 p-3 rounded-md bg-blue-500/10 border border-blue-800 text-blue-300 text-xs">
+                    <span className="flex-1">{aiNotice}</span>
+                    <button onClick={() => setAiNotice(null)} aria-label="Kapat" className="text-gray-600 hover:text-gray-400 transition-colors">
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                )}
+
                 {qualityWarnings.length === 0 ? (
                   <div className="flex items-center gap-2 py-6 justify-center">
                     <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -446,7 +472,15 @@ export default function ReportContent() {
               </div>
             </div>
 
-            {/* AI Açıklamaları */}
+            {/* AI Önerileri: insan onayı bekleyen taslaklar */}
+            {suggestionsError && (
+              <p role="alert" className="text-red-400 text-xs">{suggestionsError}</p>
+            )}
+            {(suggestions.length > 0 || suggestionsError === null) && (
+              <AiSuggestionsPanel projectId={id} suggestions={suggestions} onChanged={handleReviewChanged} />
+            )}
+
+            {/* Onaylı AI Açıklamaları */}
             {Object.keys(aiDescriptions).length > 0 && (
               <div className="bg-gray-900 border border-gray-800 rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4">
@@ -454,7 +488,7 @@ export default function ReportContent() {
                     <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                     </svg>
-                    <h2 className="text-gray-100 font-medium text-sm">AI Açıklamaları</h2>
+                    <h2 className="text-gray-100 font-medium text-sm">Onaylı AI Açıklamaları</h2>
                   </div>
                   <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 text-xs font-medium border border-blue-800">
                     {Object.keys(aiDescriptions).length}

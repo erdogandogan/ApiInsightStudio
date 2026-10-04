@@ -9,7 +9,7 @@ using Microsoft.Extensions.Options;
 
 namespace ApiInsightStudio.Api.Tests;
 
-/// <summary>AI açıklamasının yalnızca AiSummary'ye yazıldığını, skoru ve uyarıları etkilemediğini doğrular.</summary>
+/// <summary>AI çıktısının önce onay bekleyen taslak olduğunu; onaydan sonra yalnızca AiSummary'ye yazıldığını, skoru ve uyarıları etkilemediğini doğrular.</summary>
 public class AiDescriptionTests
 {
     private sealed class FakeHandler : HttpMessageHandler
@@ -41,7 +41,8 @@ public class AiDescriptionTests
             new ConfigurationBuilder().Build(),
             TestServices.CreateAnalysisService(context),
             new TestGenerationService(context),
-            aiService);
+            aiService,
+            new ApiInsightStudio.Api.Audit.AuditTrail(context, TimeProvider.System));
 
         var identity = new ClaimsIdentity(
             new[] { new Claim(ClaimTypes.NameIdentifier, userId.ToString()) }, "test");
@@ -64,7 +65,7 @@ public class AiDescriptionTests
     }
 
     [Fact]
-    public async Task AI_aciklamasi_AiSummarye_yazilir_Summary_skor_ve_uyari_degismez()
+    public async Task AI_ciktisi_taslak_olur_AiSummary_ve_Summary_degismez_skor_ve_uyari_ayni_kalir()
     {
         using var db = new TestDb();
         var (userId, projectId, endpointId) = SeedAnalyzedProject(db);
@@ -78,8 +79,15 @@ public class AiDescriptionTests
 
         await using var check = db.CreateContext();
         var endpoint = check.Endpoints.Single(e => e.Id == endpointId);
-        Assert.Equal("Ürünleri listeler.", endpoint.AiSummary);
+        Assert.Null(endpoint.AiSummary);                       // onaylanmadan yayımlanmaz
         Assert.Equal(string.Empty, endpoint.Summary);
+
+        var suggestion = Assert.Single(check.AiSuggestions);
+        Assert.Equal("Ürünleri listeler.", suggestion.Content);
+        Assert.Equal(Models.AiSuggestion.StatusPending, suggestion.Status);
+        Assert.Equal("qwen2.5:7b", suggestion.Model);
+        Assert.Equal(AiService.PromptVersion, suggestion.PromptVersion);
+        Assert.Equal(userId, suggestion.CreatedByUserId);
 
         var analysis = check.AnalysisResults.Single(a => a.ProjectId == projectId);
         Assert.Equal(90, analysis.Score);
@@ -88,7 +96,7 @@ public class AiDescriptionTests
     }
 
     [Fact]
-    public async Task Dashboard_kaydedilmis_AI_aciklamasini_sunucudan_dondurur()
+    public async Task Dashboard_onaylanmis_AI_aciklamasini_dondurur_taslagi_dondurmez()
     {
         using var db = new TestDb();
         var (userId, projectId, endpointId) = SeedAnalyzedProject(db);
@@ -97,9 +105,18 @@ public class AiDescriptionTests
         var controller = CreateController(context, userId, () => OllamaReply("Ürünleri listeler."));
         await controller.GenerateAiDescription(projectId, endpointId);
 
-        var result = await controller.GetDashboard(projectId);
+        // Taslak onaylanmadan dashboard AI açıklaması göstermez
+        var before = Assert.IsType<DashboardReportDto>(Assert.IsType<OkObjectResult>(await controller.GetDashboard(projectId)).Value);
+        Assert.Null(Assert.Single(before.Warnings).EndpointAiSummary);
 
-        var report = Assert.IsType<DashboardReportDto>(Assert.IsType<OkObjectResult>(result).Value);
+        var suggestionId = context.AiSuggestions.Single().Id;
+        var review = new AiReviewController(context, new ApiInsightStudio.Api.Audit.AuditTrail(context, TimeProvider.System), TimeProvider.System)
+        {
+            ControllerContext = controller.ControllerContext
+        };
+        Assert.IsType<OkObjectResult>(await review.Approve(projectId, suggestionId, null));
+
+        var report = Assert.IsType<DashboardReportDto>(Assert.IsType<OkObjectResult>(await controller.GetDashboard(projectId)).Value);
         Assert.Equal(90, report.KaliteSkoru);
         var warning = Assert.Single(report.Warnings);
         Assert.Equal("Ürünleri listeler.", warning.EndpointAiSummary);
@@ -121,6 +138,7 @@ public class AiDescriptionTests
 
         await using var check = db.CreateContext();
         Assert.Null(check.Endpoints.Single(e => e.Id == endpointId).AiSummary);
+        Assert.Empty(check.AiSuggestions);
     }
 
     [Fact]
@@ -141,6 +159,7 @@ public class AiDescriptionTests
 
         await using var check = db.CreateContext();
         Assert.Null(check.Endpoints.Single(e => e.Id == endpointId).AiSummary);
+        Assert.Empty(check.AiSuggestions);
     }
 
     [Fact]
@@ -158,10 +177,11 @@ public class AiDescriptionTests
 
         await using var check = db.CreateContext();
         Assert.Null(check.Endpoints.Single(e => e.Id == endpointId).AiSummary);
+        Assert.Empty(check.AiSuggestions);
     }
 
     [Fact]
-    public async Task Yeniden_analiz_kaydedilmis_AI_aciklamasini_silmez()
+    public async Task Yeniden_analiz_onaylanmis_AI_aciklamasini_silmez()
     {
         using var db = new TestDb();
         var (userId, projectId, endpointId) = SeedAnalyzedProject(db);
@@ -170,6 +190,12 @@ public class AiDescriptionTests
         {
             var controller = CreateController(context, userId, () => OllamaReply("Ürünleri listeler."));
             await controller.GenerateAiDescription(projectId, endpointId);
+            var suggestionId = context.AiSuggestions.Single().Id;
+            var review = new AiReviewController(context, new ApiInsightStudio.Api.Audit.AuditTrail(context, TimeProvider.System), TimeProvider.System)
+            {
+                ControllerContext = controller.ControllerContext
+            };
+            await review.Approve(projectId, suggestionId, null);
         }
 
         await using (var context = db.CreateContext())

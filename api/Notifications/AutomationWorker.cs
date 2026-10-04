@@ -1,3 +1,4 @@
+using ApiInsightStudio.Api.Automation;
 using ApiInsightStudio.Api.Events;
 using Microsoft.Extensions.Options;
 
@@ -31,6 +32,8 @@ public class AutomationWorker : BackgroundService
             try
             {
                 using var scope = _scopeFactory.CreateScope();
+                // Zamana bağlı kural: bekleyen AI önerisi hatırlatması (uyarı açılırsa aşağıdaki dağıtımla hemen bildirilir)
+                await scope.ServiceProvider.GetRequiredService<ReviewReminderService>().EvaluateAsync(stoppingToken);
                 await scope.ServiceProvider.GetRequiredService<OutboxDispatcher>().DispatchPendingAsync(stoppingToken);
                 await scope.ServiceProvider.GetRequiredService<DeliveryProcessor>().ProcessDueAsync(stoppingToken);
             }

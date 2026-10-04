@@ -41,7 +41,7 @@ Sağlayıcı ve model kod değişmeden, `api/appsettings.json` içindeki `Ai` b�
 | LM Studio | `http://localhost:1234` |
 | llama.cpp server | `http://localhost:8080` |
 
-`BaseUrl` "/v1" olmadan yazılır. Anahtar isteyen bir sağlayıcı için `Ai:ApiKey` yalnızca `dotnet user-secrets` ile verilir, dosyaya yazılmaz. Üretilen açıklama `Endpoint.AiSummary` alanına kaydedilir, kalite skorunu etkilemez.
+`BaseUrl` "/v1" olmadan yazılır. Anahtar isteyen bir sağlayıcı için `Ai:ApiKey` yalnızca `dotnet user-secrets` ile verilir, dosyaya yazılmaz. Üretilen açıklama **doğrudan yayımlanmaz**: onay bekleyen bir öneri olur (aşağıdaki "AI önerisi onayı" bölümü); onaylanınca `Endpoint.AiSummary` alanına yazılır, kalite skorunu etkilemez.
 
 ### Uyarılar ve bildirimler (webhook)
 Bir analiz bitince kurallar çalışır ve yeni bir uyarı açılırsa (skor eşiğin altında, kritik uç noktada kimlik doğrulama eksik) projeye tanımlı kanallara bildirim gider. Uyarılar kenar tetiklemelidir: aynı kural için Açık uyarı varken yenisi açılmaz, kural düzelince uyarı kendiliğinden Çözüldü olur.
@@ -114,3 +114,22 @@ Güvenlik notları: Token Telegram'ın istek adresinde yer aldığı için `Http
 **Çalışma şekli:** Koşu `Pending` olarak kuyruğa girer, ayrı bir arka plan işçisi (`TestRunWorker`) çalıştırır. Uygulama yarıda kapanırsa 15 dakikadan uzun `Running` kalan koşu `Failed` ("yarıda kesildi") olarak işaretlenir. Her projede son 20 koşu saklanır. Bir projede aynı anda en fazla bir aktif koşu olabilir (veritabanı benzersiz dizini ile garanti edilir). Başarısızlık oranı, çalıştırılan testler üzerinden hesaplanır (atlananlar sayılmaz); hiç test çalışmadıysa uyarı ne açılır ne çözülür.
 
 **Bilinen sınırlar:** Sorgu parametresi zorunlu olan GET'ler parametresiz çağrılır (hedef 400 dönebilir). Üretilen senaryolar basit şablonlardır; geçerli gövde/id gerektiren başarılı akışlar test edilmez.
+
+### AI önerisi onayı ve denetim izi
+AI çıktısı bir insan onaylayana kadar hiçbir yere yazılmaz. `POST /api/project/{id}/endpoint/{endpointId}/generate-ai-description` artık bir **öneri (taslak)** oluşturur: metin, kullanılan **model adı**, **komut sürümü** (`describe-endpoint/v1`), kim istedi ve ne zaman kayıtlıdır. Aynı uç nokta için yeni bir üretim, bekleyen eski öneriyi `Superseded` yapar (en fazla bir bekleyen öneri; veritabanı benzersiz dizini ile garanti edilir). Cevaptaki `description` alanı eski istemcilerle uyum için kalır ama artık yayımlanmış bir açıklama değil, taslaktır.
+
+| Uç nokta | Ne yapar |
+|---|---|
+| `GET /api/automation/{projectId}/ai-suggestions?status=` | Öneriler (en yeni önce); `Pending`, `Approved`, `Rejected`, `Superseded` |
+| `POST /api/automation/{projectId}/ai-suggestions/{id}/approve` | Onaylar. İsteğe bağlı `editedContent` (düzenleyerek onay, en fazla 2000 karakter) ve `note` |
+| `POST /api/automation/{projectId}/ai-suggestions/{id}/reject` | Reddeder (isteğe bağlı `note`); hiçbir yere yazılmaz |
+| `GET /api/automation/{projectId}/audit?before=&take=&action=` | Denetim izi (en yeni önce, imleçli sayfalama, en fazla 100; `action` bir önek, örn. `ai.suggestion`) |
+| `GET /api/automation/{projectId}/audit/verify` | Hash zincirini baştan sona doğrular |
+
+- Yalnızca `Pending` öneri incelenebilir; ikinci onay/ret (veya yenisiyle değiştirilmiş öneri) **409** döner. Geçiş tek bir koşullu `UPDATE` ile yapılır, eşzamanlı iki istekten yalnızca biri kazanır.
+- Onay **yalnızca** `Endpoint.AiSummary` alanını değiştirir; `Summary`, kalite skoru ve uyarılar OpenAPI dokümanını yansıtmaya devam eder. Düzenlenerek onaylanırsa özgün AI metni (`Content`) değişmez, yayımlanan metin `FinalContent`'te durur.
+- **Denetim izi** ekleme-yalnızdır (güncelleme/silme uç noktası yok). Her kayıt bir öncekinin özetini (SHA-256) taşır; projede sıra numarası boşluksuz ve benzersizdir. Kayıtlar iş değişikliğiyle aynı işlemde yazılır. Kaydedilen eylemler: proje yükleme, analiz, öneri üretildi/onaylandı/reddedildi/değiştirildi, ayarlar güncellendi, webhook sırrı yenilendi, hedef token tanımlandı/silindi, test koşusu başladı/bitti. **Token, sır ve tam adres yazılmaz** (adreslerde yalnızca ana bilgisayar adı; not metni de yazılmaz, yalnızca var/yok).
+- **Zincirin sınırı (dürüst not):** Zincir, bir kaydın *değiştirilmesini, silinmesini, araya eklenmesini veya yer değiştirmesini* ortaya çıkarır. Veritabanına tam yetkisi olan biri zinciri baştan hesaplayabilir ve en sondaki kayıtların silinmesi tek başına anlaşılamaz; bu yüzden doğrulama son özeti (`headHash`) döndürür, dışarıda saklanırsa son kayıtların silinmesi de fark edilir. Denetim kayıtları projeyle birlikte silinir.
+- **Tek sahipli model:** Öneriyi üreten de onaylayan da aynı kullanıcıdır; bu "dört göz ilkesi" değil, **insan onayının kaydıdır**. Onaylayan kullanıcı kimliği kayıtlıdır, ileride rol ayrımı eklenirse hazırdır.
+- **Hatırlatma:** 24 saatten uzun süredir onay bekleyen öneri varsa `PENDING_REVIEW` uyarısı açılır ve webhook/Telegram bildirimi gider (kenar tetiklemeli: bekleyen öneri sürdükçe tekrar bildirim yok; hepsi incelenince uyarı çözülür). Zamana bağlı olduğu için olay yerine arka plan işçisinin her turunda değerlendirilir.
+- **Web:** Rapor sayfasında "AI Önerileri" bölümü (onayla / düzenleyip onayla / reddet) ve "Denetim İzi" sayfası (süzgeç, "Zinciri doğrula").
