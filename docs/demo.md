@@ -24,11 +24,3 @@ Amaç: tek bir akışta "yükle → otomatik uyarı → AI taslağı → insan o
 ## Gösterilmeyecekler
 
 Token, `user-secrets`, Telegram bot adresi (adresin içinde token var), `appsettings` dosyaları, webhook sırrı (yalnızca ilk üretildiği cevapta görünür, kayda girmesin).
-
-## Sık sorulacak sorular için kısa cevaplar
-
-- **"AI burada ne yapıyor?"** Yalnızca eksik açıklama taslağı yazıyor; karar vermiyor, hiçbir şeyi kendi başına yayımlamıyor.
-- **"Neden kural motoru yapay zekâ değil?"** Skor tekrarlanabilir ve açıklanabilir olmalı. Aynı doküman her seferinde aynı skoru alır.
-- **"Denetim izi gerçekten değiştirilemez mi?"** Değiştirme, silme ve araya ekleme zincir doğrulamasında yakalanır. Veritabanına tam yetkisi olan biri zinciri baştan hesaplayabilir ve en sondaki kayıtların silinmesi tek başına anlaşılmaz; bunun için son özet dışarıda saklanabilir. Sınır README'de yazılı.
-- **"Tek kullanıcılı sistemde 'onay' ne anlama geliyor?"** Dört göz ilkesi değil, insan onayının kaydı. Onaylayan kimliği saklanıyor, rol ayrımı eklenirse hazır.
-- **"Model yavaş mı?"** Ölçülen süreler README'deki tabloda; 4 GB ekran kartında 7B model kısmen işlemciye taşar.
