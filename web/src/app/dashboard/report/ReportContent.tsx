@@ -117,6 +117,8 @@ export default function ReportContent() {
   const [aiNotice, setAiNotice] = useState<string | null>(null)
   const [suggestions, setSuggestions] = useState<AiSuggestionDto[]>([])
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null)
+  const [exporting, setExporting] = useState(false)
+  const [exportNotice, setExportNotice] = useState<{ kind: 'ok' | 'info' | 'error'; text: string } | null>(null)
 
   interface AiEntry { description: string; method: string; path: string }
 
@@ -190,6 +192,40 @@ export default function ReportContent() {
       setAiError(errorMessage(err, errObj.message ?? 'AI açıklaması oluşturulamadı.'))
     } finally {
       setLoadingEndpointId(null)
+    }
+  }
+
+  // Onaylı AI açıklamalarıyla güncellenmiş OpenAPI kopyasını indirir. Proje, skor ve uyarılar değişmez.
+  async function handleExportOpenApi() {
+    setExporting(true)
+    setExportNotice(null)
+    try {
+      const response = await apiClient.get<Blob>(`/project/${id}/export-openapi`, { responseType: 'blob' })
+      const filled = Number(response.headers['x-filled-count'] ?? 0)
+      if (filled === 0) {
+        setExportNotice({
+          kind: 'info',
+          text: 'Eklenecek onaylı açıklama yok: onaylanan açıklamalar ya yok ya da ilgili işlemlerde zaten bir açıklama var. Dosya indirilmedi.',
+        })
+        return
+      }
+      // Türkçe harfli ad için UTF-8 biçimi (filename*=) tercih edilir; yoksa düz ASCII yedek ad
+      const disposition = String(response.headers['content-disposition'] ?? '')
+      const utf8Name = /filename\*=UTF-8''([^;]+)/i.exec(disposition)?.[1]
+      const plainName = /filename="?([^";]+)"?/i.exec(disposition)?.[1]
+      const fileName = utf8Name ? decodeURIComponent(utf8Name) : (plainName ?? 'guncellenmis-openapi.json')
+      const url = URL.createObjectURL(response.data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      a.click()
+      URL.revokeObjectURL(url)
+      setExportNotice({ kind: 'ok', text: `${filled} onaylı açıklama eklenmiş kopya indirildi. Projeniz ve skorunuz değişmedi.` })
+    } catch (err: unknown) {
+      if (httpStatus(err) === 401) { router.push('/login'); return }
+      setExportNotice({ kind: 'error', text: 'Dosya hazırlanamadı. Lütfen tekrar deneyin.' })
+    } finally {
+      setExporting(false)
     }
   }
 
@@ -494,6 +530,26 @@ export default function ReportContent() {
                     {Object.keys(aiDescriptions).length}
                   </span>
                 </div>
+                <div className="flex flex-wrap items-center gap-3 mb-4">
+                  <button
+                    onClick={handleExportOpenApi}
+                    disabled={exporting}
+                    className="px-3 py-1.5 rounded-md bg-gray-800 hover:bg-gray-700 border border-gray-700 text-gray-300 hover:text-gray-100 text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {exporting ? 'Hazırlanıyor…' : 'Güncellenmiş OpenAPI dosyasını indir'}
+                  </button>
+                  <span className="text-gray-600 text-xs">
+                    Onaylı açıklamalar, yüklediğiniz dosyanın bir kopyasına eklenir (yalnızca açıklaması boş olan işlemlere). Projeniz ve skorunuz değişmez.
+                  </span>
+                </div>
+                {exportNotice && (
+                  <p
+                    role={exportNotice.kind === 'error' ? 'alert' : 'status'}
+                    className={`mb-4 text-xs ${exportNotice.kind === 'error' ? 'text-red-400' : exportNotice.kind === 'ok' ? 'text-green-400' : 'text-blue-300'}`}
+                  >
+                    {exportNotice.text}
+                  </p>
+                )}
                 <ul className="space-y-2">
                   {Object.entries(aiDescriptions).map(([endpointId, entry]) => (
                     <li key={endpointId} className="bg-gray-950 border border-gray-800 rounded-md p-3">

@@ -55,6 +55,7 @@ export const STATUS_LABELS: Record<SuggestionStatus, string> = {
 export const ACTION_LABELS: Record<string, string> = {
   'project.uploaded': 'Proje yüklendi',
   'analysis.completed': 'Analiz tamamlandı',
+  'openapi.exported': 'Güncellenmiş OpenAPI indirildi',
   'ai.suggestion.created': 'AI önerisi üretildi',
   'ai.suggestion.approved': 'AI önerisi onaylandı',
   'ai.suggestion.rejected': 'AI önerisi reddedildi',
@@ -76,6 +77,7 @@ export const AUDIT_FILTERS: { value: string; label: string }[] = [
   { value: 'target', label: 'Hedef token' },
   { value: 'testrun', label: 'Test koşuları' },
   { value: 'analysis', label: 'Analiz' },
+  { value: 'openapi', label: 'Dışa aktarma' },
   { value: 'project', label: 'Proje' },
 ]
 

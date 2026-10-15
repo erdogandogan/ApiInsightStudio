@@ -365,6 +365,68 @@ public class ProjectController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Yüklenen OpenAPI dokümanının bir kopyasına, onaylanmış AI açıklamalarını (yalnızca açıklaması boş işlemlere) yazıp
+    /// indirilebilir dosya olarak döndürür. Projenin kendisi, skoru ve uyarıları DEĞİŞMEZ. Eklenen açıklama sayısı
+    /// <c>X-Filled-Count</c> başlığındadır; hiç açıklama eklenmediyse (0) dosya orijinaliyle aynı içeriktedir.
+    /// </summary>
+    [HttpGet("{projectId}/export-openapi")]
+    public async Task<IActionResult> ExportOpenApi([FromRoute] int projectId)
+    {
+        if (!User.TryGetUserId(out var userId))
+            return Unauthorized(new { message = "Geçerli bir kullanıcı bilgisi bulunamadı." });
+
+        // Proje başkasına aitse "bulunamadı" döner (varlığı sızdırılmaz)
+        var project = await _context.Projects
+            .AsNoTracking()
+            .Where(p => p.Id == projectId && p.UserId == userId)
+            .Select(p => new { p.Name, p.OpenApiContent })
+            .FirstOrDefaultAsync();
+        if (project is null)
+            return NotFound(new { message = "Proje bulunamadı." });
+
+        var approved = (await _context.Endpoints
+                .AsNoTracking()
+                .Where(e => e.ProjectId == projectId && e.AiSummary != null && e.AiSummary != "")
+                .Select(e => new { e.Method, e.Path, e.AiSummary })
+                .ToListAsync())
+            .Select(e => (e.Method, e.Path, Text: e.AiSummary!))
+            .ToList();
+
+        OpenApiExportResult result;
+        try
+        {
+            result = OpenApiExporter.Export(project.OpenApiContent, approved);
+        }
+        catch (JsonException)
+        {
+            return BadRequest(new { message = "Proje dokümanı JSON olarak okunamadı; dışa aktarılamıyor." });
+        }
+
+        if (result.Filled > 0)
+        {
+            // Denetim izine yalnızca sayılar yazılır (açıklama metinleri ve doküman içeriği yazılmaz)
+            await _audit.AppendAsync(projectId, userId, AuditActions.OpenApiExported, null,
+                $"filled={result.Filled}; skippedExisting={result.SkippedExistingSummary}; notInDocument={result.NotFoundInDocument}");
+            await _context.SaveChangesAsync();
+        }
+
+        Response.Headers["X-Filled-Count"] = result.Filled.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        return File(
+            System.Text.Encoding.UTF8.GetBytes(result.Json),
+            "application/json",
+            SafeFileName(project.Name) + "-guncellenmis-openapi.json");
+    }
+
+    /// <summary>Dosya adı için yalnızca harf/rakam/tire/alt çizgi bırakır (yol ayırıcı, başlık enjeksiyonu yok).</summary>
+    private static string SafeFileName(string name)
+    {
+        var cleaned = new string(name.Select(c => char.IsLetterOrDigit(c) || c is '-' or '_' ? c : '-').ToArray()).Trim('-');
+        if (cleaned.Length > 60)
+            cleaned = cleaned[..60];
+        return cleaned.Length == 0 ? "proje" : cleaned;
+    }
+
     [HttpDelete("{projectId}")]
     public async Task<IActionResult> DeleteProject([FromRoute] int projectId)
     {
