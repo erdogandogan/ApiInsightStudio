@@ -5,6 +5,7 @@ public static class AuditActions
 {
     public const string ProjectUploaded = "project.uploaded";
     public const string AnalysisCompleted = "analysis.completed";
+    public const string OpenApiExported = "openapi.exported";
     public const string SuggestionCreated = "ai.suggestion.created";
     public const string SuggestionApproved = "ai.suggestion.approved";
     public const string SuggestionRejected = "ai.suggestion.rejected";

@@ -115,7 +115,9 @@ builder.Services.AddCors(options =>
     {
         policy.WithOrigins("http://localhost:3000", "app://localhost")
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              // Tarayıcının dışa aktarma sayısını ve dosya adını okuyabilmesi için
+              .WithExposedHeaders("X-Filled-Count", "Content-Disposition");
     });
 });
 

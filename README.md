@@ -232,6 +232,7 @@ AI çıktısı bir insan onaylayana kadar hiçbir yere yazılmaz. `POST /api/pro
 | `POST /api/automation/{projectId}/ai-suggestions/{id}/reject` | Reddeder (isteğe bağlı `note`); hiçbir yere yazılmaz |
 | `GET /api/automation/{projectId}/audit?before=&take=&action=` | Denetim izi (en yeni önce, imleçli sayfalama, en fazla 100; `action` bir önek, örn. `ai.suggestion`) |
 | `GET /api/automation/{projectId}/audit/verify` | Hash zincirini baştan sona doğrular |
+| `GET /api/project/{projectId}/export-openapi` | Yüklenen OpenAPI dosyasının bir **kopyasına** onaylı AI açıklamalarını yazıp indirilebilir dosya olarak döndürür (aşağıya bak) |
 
 - Yalnızca `Pending` öneri incelenebilir; ikinci onay/ret (veya yenisiyle değiştirilmiş öneri) **409** döner. Geçiş tek bir koşullu `UPDATE` ile yapılır, eşzamanlı iki istekten yalnızca biri kazanır.
 - Onay **yalnızca** `Endpoint.AiSummary` alanını değiştirir; `Summary`, kalite skoru ve uyarılar OpenAPI dokümanını yansıtmaya devam eder. Düzenlenerek onaylanırsa özgün AI metni (`Content`) değişmez, yayımlanan metin `FinalContent`'te durur.
@@ -240,6 +241,7 @@ AI çıktısı bir insan onaylayana kadar hiçbir yere yazılmaz. `POST /api/pro
 - **Tek sahipli model:** Öneriyi üreten de onaylayan da aynı kullanıcıdır; bu "dört göz ilkesi" değil, **insan onayının kaydıdır**. Onaylayan kullanıcı kimliği kayıtlıdır, ileride rol ayrımı eklenirse hazırdır.
 - **Hatırlatma:** 24 saatten uzun süredir onay bekleyen öneri varsa `PENDING_REVIEW` uyarısı açılır ve webhook/Telegram bildirimi gider (kenar tetiklemeli: bekleyen öneri sürdükçe tekrar bildirim yok; hepsi incelenince uyarı çözülür). Zamana bağlı olduğu için olay yerine arka plan işçisinin her turunda değerlendirilir.
 - **Web:** Rapor sayfasında "AI Önerileri" bölümü (onayla / düzenleyip onayla / reddet) ve "Denetim İzi" sayfası (süzgeç, "Zinciri doğrula").
+- **Güncellenmiş OpenAPI dosyasını indirme:** Onaylanan açıklamalar yalnızca uygulamada durmaz; "Güncellenmiş OpenAPI dosyasını indir" ile yüklediğin dosyanın **bir kopyasına** yazılıp indirilir (JSON dokümanlar; OpenAPI 3.x ve Swagger 2.0). Kurallar: yalnızca açıklaması boş olan işlemlere yazılır (yazarın kendi `summary`/`description` metnine dokunulmaz); yazılan her işleme `x-ai-onayli: true` işareti konur; dokümanın geri kalanı olduğu gibi kalır. **Uygulamadaki proje, skoru ve uyarıları değişmez** (skor yalnızca yüklenen dokümanı yansıtır); indirilen dosyayı yeni proje olarak yüklersen "açıklama eksik" uyarıları kalkar. İndirme, yalnızca sayılarla (`filled=1; ...`, açıklama metni yok) denetim izine yazılır. Eklenen açıklama sayısı `X-Filled-Count` başlığındadır; 0 ise web dosya indirmez ve nedenini söyler.
 
 ## Bilinen sınırlar
 
